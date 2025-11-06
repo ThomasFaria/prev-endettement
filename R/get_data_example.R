@@ -1,4 +1,5 @@
 source("R/data/retrieval_webstat.R")
+source("R/data/retrieval_insee.R")
 
 # Une fois que vous avez créé votre fichier secrets.yaml, vous pouvez lire la clé API comme suit :
 secrets <- yaml::read_yaml("secrets.yaml")
@@ -16,3 +17,11 @@ series <- c(
 
 # Fonction pour récupérer les données :
 data <- get_webstat(series_keys = series, api_key = secrets$api_key)
+
+series <- c(
+            "010567059", # Indice des prix des logements anciens - France métropolitaine - Ensemble - Base 100 en moyenne annuelle 2015 - Série CVS
+            "010567013", # Indice des prix des logements anciens - Paris - Appartements - Base 100 en moyenne annuelle 2015 - Série CVS
+            "010567079", # Indice des prix des logements anciens - Île-de-France : Ensemble - Base 100 en moyenne annuelle 2015 - Série CVS 
+            "010567073" # Indice des prix des logements anciens - Province - Ensemble - Base 100 en moyenne annuelle 2015 - Série CVS
+)
+data_insee <- get_insee(series)
