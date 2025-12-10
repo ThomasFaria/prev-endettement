@@ -481,9 +481,11 @@ models <- lapply(1:nrow(grid), function(i) as.numeric(grid[i, ]))
 model_names <- sapply(models, function(m) paste0("ARIMA", m[1], m[2], m[3]))
 
 errors  <- data.frame(matrix(nrow = length(models), ncol = 0))
+merrors  <- data.frame(matrix(nrow = length(models), ncol = 0))
 aic_mat <- data.frame(matrix(nrow = length(models), ncol = 0))
 bic_mat <- data.frame(matrix(nrow = length(models), ncol = 0))
 rownames(errors)  <- model_names
+rownames(merrors)  <- model_names
 rownames(aic_mat) <- model_names
 rownames(bic_mat) <- model_names
 
@@ -503,6 +505,7 @@ for (start in seq(1, length(y) - train_size - test_size, by = step)) {
   })
   
   errors[[paste0("window_", start)]] <- rep(NA, length(models))
+  merrors[[paste0("window_", start)]] <- rep(NA, length(models))
   aic_mat[[paste0("window_", start)]] <- rep(NA, length(models))
   bic_mat[[paste0("window_", start)]] <- rep(NA, length(models))
   test_original <- z[(start + train_size):(start + train_size + test_size - 1)]
@@ -515,16 +518,17 @@ for (start in seq(1, length(y) - train_size - test_size, by = step)) {
       pred <- forecast(fit, h = length(test))$mean
       pred_mean  <- last_val + cumsum(pred)
       errors[i, ncol(errors)] <- sqrt(mean((test_original - pred_mean)^2))
+      merrors[i, ncol(merrors)] <- sqrt(mean(((test_original - pred_mean)/test_original)^2))*100
     }
   }
 }
 
+merrors
 
-mean(z)
-errors
-
+mean_RMSPE <- rowMeans(merrors, na.rm = TRUE)
 mean_RMSE <- rowMeans(errors, na.rm = TRUE)
 mean_rmse_hors_covid <- rowMeans(errors[, !colnames(errors) %in% c("window_117", "window_21", "window_25")], na.rm = TRUE)
+mean_rmspe_hors_covid <- rowMeans(merrors[, !colnames(merrors) %in% c("window_117", "window_21", "window_25")], na.rm = TRUE)
 var_RMSE <- apply(errors, 1, function(x) var(x, na.rm = TRUE))
 var_RMSE_HC <- apply(errors[, !colnames(errors) %in% c("window_117", "window_21", "window_25")], 1, function(x) var(x, na.rm = TRUE))
 
@@ -533,6 +537,8 @@ summary_table <- data.frame(
   Model = rownames(errors),
   Mean_RMSE = rowMeans(errors, na.rm = TRUE),
   Mean_RMSE_HC = mean_rmse_hors_covid,
+  Mean_RMSPE = rowMeans(merrors, na.rm = TRUE),
+  Mean_RMSPE_HC = mean_rmspe_hors_covid,
   Var_RMSE = var_RMSE, 
   Var_RMSE_HC = var_RMSE_HC
 )
@@ -555,9 +561,11 @@ models <- lapply(1:nrow(grid), function(i) as.numeric(grid[i, ]))
 model_names <- sapply(models, function(m) paste0("ARIMA", m[1], m[2], m[3]))
 
 errors2  <- data.frame(matrix(nrow = length(models), ncol = 0))
+merrors2  <- data.frame(matrix(nrow = length(models), ncol = 0))
 aic_mat2 <- data.frame(matrix(nrow = length(models), ncol = 0))
 bic_mat2 <- data.frame(matrix(nrow = length(models), ncol = 0))
 rownames(errors2)  <- model_names
+rownames(merrors2)  <- model_names
 rownames(aic_mat2) <- model_names
 rownames(bic_mat2) <- model_names
 
@@ -589,6 +597,7 @@ for (start in start_seq) {
   })
   
   errors2[[paste0("window_", start)]] <- rep(NA, length(models))
+  merrors2[[paste0("window_", start)]] <- rep(NA, length(models))
   aic_mat2[[paste0("window_", start)]] <- rep(NA, length(models))
   bic_mat2[[paste0("window_", start)]] <- rep(NA, length(models))
   test_original <- z[(start + train_size):(start + train_size + test_size - 1)]
@@ -601,6 +610,7 @@ for (start in start_seq) {
       pred <- forecast(fit, xreg = test_xreg, h = length(test))$mean
       pred_mean  <- last_val + cumsum(pred)
       errors2[i, ncol(errors2)] <- sqrt(mean((test_original - pred_mean)^2))
+      merrors2[i, ncol(merrors2)] <- sqrt(mean(((test_original - pred_mean)/test_original)^2)) * 100
     }
   }
 }
