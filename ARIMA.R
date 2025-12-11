@@ -1,4 +1,4 @@
-source("docs/retrieval_webstat.R")
+source("R/data/retrieval_webstat.R")
 
 library(portes)
 library(astsa)
@@ -7,9 +7,9 @@ library(zoo)
 library(forecast)
 library(tseries)
 library(lubridate)
+library(ggplot2)
 
-
-secrets <- yaml::read_yaml("secret.yaml")
+secrets <- yaml::read_yaml("secrets.yaml")
 
 ##############
 #DATA.      ##

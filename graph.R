@@ -1,8 +1,8 @@
-source("docs/retrieval_webstat.R")
+source("R/data/retrieval_webstat.R")
 library(yaml)
 library(ggplot2)
 
-secrets <- yaml::read_yaml("secret.yaml")
+secrets <- yaml::read_yaml("secrets.yaml")
 
 series <- c(
   "CNFSI.Q.S.FR.W0.S1M.S1.N.L.LE.DETT.T._Z.XDC_R_B1GQ_CY._T.S.V.N._T", 
