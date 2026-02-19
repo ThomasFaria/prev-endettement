@@ -330,21 +330,6 @@ compare_arima_errors <- function(errors_no_covid,
   return(comparison_table)
 }
 
-model_111 <- Arima(data$endettement_snf, order = c(1,1,1))
-residus <- residuals(model_111)
-
-ggplot(data, aes(x = time, y = residus)) +
-  geom_line(color = "blue") +
-  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
-  scale_x_date(
-    date_breaks = "1 year",        # un tick tous les ans
-    date_labels = "%Y"             # afficher seulement l'année
-  ) +
-  labs(title = "Résidus du modèle ARIMA(1,1,1) série SNF",
-       x = "Année",
-       y = "Résidus") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
 
