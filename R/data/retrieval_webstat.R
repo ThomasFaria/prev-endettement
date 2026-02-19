@@ -56,7 +56,7 @@ get_webstat <- function(
       time = time_period_end,
       values = obs_value
     ) |>
-    tibble::as_tibble(key = "series_key", index = "time")
+    tibble::as_tibble()
 
   return(df)
 }

@@ -1,5 +1,6 @@
 source("R/data/retrieval_webstat.R")
 source("R/data/retrieval_insee.R")
+source("R/data/retrieval_ecb.R")
 
 # Une fois que vous avez créé votre fichier secrets.yaml, vous pouvez lire la clé API comme suit :
 secrets <- yaml::read_yaml("secrets.yaml")
@@ -25,3 +26,15 @@ series <- c(
             "010567073" # Indice des prix des logements anciens - Province - Ensemble - Base 100 en moyenne annuelle 2015 - Série CVS
 )
 data_insee <- get_insee(series)
+
+
+series_ecb <- c(
+    "BLS.Q.FR.ALL.Z.H.H.B3.ZZ.D.FNET", # Demande de crédits à l'habitat (ménages)
+    "BLS.Q.FR.ALL.Z.H.H.B3.ST.S.FNET", # Octroi de crédits à l'habitat (ménages)
+    "BLS.Q.FR.ALL.SME.E.Z.B3.ZZ.D.FNET",	# Demande de crédit - PME
+    "BLS.Q.FR.ALL.SME.E.Z.B3.ST.S.FNET",	# Octroi de crédits - PME
+    "BLS.Q.FR.ALL.LE.E.Z.B3.ZZ.D.FNET",	# Demande de crédit - Grandes Entreprises
+    "BLS.Q.FR.ALL.LE.E.Z.B3.ST.S.FNET"	# Octroi de crédits - Grandes Entreprises
+)
+
+data_ecb <- get_ecb(series_ecb)
