@@ -87,9 +87,9 @@ get_uni_time_country <- function(data) {
   data_transformed <- data_transformed %>%
     mutate(
       epargne = ifelse(epargne == 0, NA, epargne),
-      octroi_credit  = ifelse(time < as.Date("2003-03-31"), NA, octroi_credit),
+      octroi_credit  = ifelse(time < as.Date("2002-12-31"), NA, octroi_credit),
       demande_credit  = ifelse(time < as.Date("2002-12-31"), NA, demande_credit),
-      octroi_credit_snf  = ifelse(time < as.Date("2003-03-31"), NA, octroi_credit_snf),
+      octroi_credit_snf  = ifelse(time < as.Date("2002-12-31"), NA, octroi_credit_snf),
       demande_credit_snf  = ifelse(time < as.Date("2002-12-31"), NA, demande_credit_snf),
       credit_aplusunan  = ifelse(time < as.Date("2003-03-31"), NA, credit_aplusunan),
       Taux_immo  = ifelse(time < as.Date("2004-03-31"), NA, Taux_immo),
