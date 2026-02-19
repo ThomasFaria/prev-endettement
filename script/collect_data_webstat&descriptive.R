@@ -45,7 +45,9 @@ series <- c(
   "STS.Q.FR.N.INWR.000000.2.ANR",
   "BSI.M.U2.Y.V.M30.X.I.U2.2300.Z01.V",
   "RPP.Q.FR.N.ED.00.1.00",
-  "PAI.M.FR.N.PR._Z.INPR03.TX"
+  "PAI.M.FR.N.PR._Z.INPR03.TX",
+  "BLS.Q.FR.ALL.O.E.Z.B3.ST.S.FNET",
+  "BLS.Q.FR.ALL.O.E.Z.B3.ZZ.D.FNET"
 )
 
 data <- get_webstat_with_country(series_keys = series, api_key = secrets$api_key)
@@ -53,6 +55,8 @@ unique(data$title_fr)
 
 data <- get_uni_time_country(data)
 a <- subset(data, Pays == "France")
+
+View(data)
 
 trimestre_par_an_df <- calcul_trimestres_par_an(data, "time")
 print(trimestre_par_an_df)

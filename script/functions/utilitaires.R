@@ -10,6 +10,8 @@ get_uni_time_country <- function(data) {
       epargne           = ifelse(ind_epargne == 1, values, 0),
       octroi_credit     = ifelse(ind_octroi_credit == 1, values, 0),
       demande_credit    = ifelse(ind_demande_credit == 1, values, 0),
+      octroi_credit_snf     = ifelse(ind_octroi_credit_snf == 1, values, 0),
+      demande_credit_snf   = ifelse(ind_demande_credit_snf == 1, values, 0),
       credit_aplusunan  = ifelse(ind_credit_aplusunan == 1, values, 0),
       Taux_long         = ifelse(ind_Taux_long == 1, values, 0),
       Taux_immo         = ifelse(ind_Taux_immo == 1, values, 0),
@@ -29,6 +31,8 @@ get_uni_time_country <- function(data) {
       epargne        = sum(epargne, na.rm = TRUE),
       octroi_credit    = sum(octroi_credit, na.rm = TRUE),
       demande_credit   = sum(demande_credit, na.rm = TRUE),
+      octroi_credit_snf    = sum(octroi_credit_snf, na.rm = TRUE),
+      demande_credit_snf   = sum(demande_credit_snf, na.rm = TRUE),
       credit_aplusunan = sum(credit_aplusunan, na.rm = TRUE),
       Taux_long      = sum(Taux_long, na.rm = TRUE),
       Taux_immo         = sum(Taux_immo, na.rm = TRUE),
@@ -54,6 +58,8 @@ get_uni_time_country <- function(data) {
       epargne          = sum(epargne, na.rm = TRUE),
       octroi_credit    = sum(octroi_credit, na.rm = TRUE),
       demande_credit   = sum(demande_credit, na.rm = TRUE),
+      octroi_credit_snf    = sum(octroi_credit_snf, na.rm = TRUE),
+      demande_credit_snf   = sum(demande_credit_snf, na.rm = TRUE),
       credit_aplusunan = mean(credit_aplusunan, na.rm = TRUE),
       inflation        = mean(inflation, na.rm = TRUE), # moyenne trimestrielle
       Taux_long        = mean(Taux_long, na.rm = TRUE), # moyenne trimestrielle
@@ -76,13 +82,15 @@ get_uni_time_country <- function(data) {
     filter(time >= as.Date("1999-03-31")) %>%
     filter(time <= as.Date("2025-06-30")) %>%
     dplyr::select(Pays, time, endettement_menage, endettement_snf, inflation, endettement_agent_nonfinancie_privee, part_menage, epargne, octroi_credit, demande_credit, credit_aplusunan,  Taux_long, chomage
-                  , Taux_immo, Taux_snf, prix_logement, M3, salaires, inflation_anticipée, Duree_immo)
+                  , Taux_immo, Taux_snf, prix_logement, M3, salaires, inflation_anticipée, Duree_immo, octroi_credit_snf, demande_credit_snf)
   
   data_transformed <- data_transformed %>%
     mutate(
       epargne = ifelse(epargne == 0, NA, epargne),
       octroi_credit  = ifelse(time < as.Date("2003-03-31"), NA, octroi_credit),
       demande_credit  = ifelse(time < as.Date("2002-12-31"), NA, demande_credit),
+      octroi_credit_snf  = ifelse(time < as.Date("2003-03-31"), NA, octroi_credit_snf),
+      demande_credit_snf  = ifelse(time < as.Date("2002-12-31"), NA, demande_credit_snf),
       credit_aplusunan  = ifelse(time < as.Date("2003-03-31"), NA, credit_aplusunan),
       Taux_immo  = ifelse(time < as.Date("2004-03-31"), NA, Taux_immo),
       salaires  = ifelse(time < as.Date("2006-01-31"), NA, salaires),

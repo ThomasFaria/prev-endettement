@@ -77,7 +77,8 @@ get_webstat_with_country <- function(series_keys, api_key) {
   data$title_fr <- ifelse(data$title_fr == "Indice des prix des logements anciens - France métropolitaine - Ensemble - Base 100 en moyenne annuelle 2015 - Série brute", "Indice des prix des logements anciens - France, Base 100 en moyenne annuelle 2015", data$title_fr)
   data$title_fr <- ifelse(data$title_fr == "Indicateur ajusté et lissé mensuel des anticipations d'inflation françaises issu de la presse", "Indicateur ajusté et lissé mensuel des anticipations d'inflation - France, issu de la presse", data$title_fr)
   data$title_fr <- ifelse(data$title_fr == "Agrégats monétaires Zone euro, M3 [moyenne mobile 3 mois du glissement annuel] (CVS-CJO)", "M3 zone euro - France, trimestrielle", data$title_fr)
-  
+  data$title_fr <- ifelse(data$title_fr == "Demande de crédits des entreprises", "Demande de crédits des entreprises - France, trimestriels", data$title_fr)
+  data$title_fr <- ifelse(data$title_fr == "Octroi de crédits aux entreprises", "Octroi de crédits aux entreprises - France, trimestriels", data$title_fr)
   
   
   data$Pays <- sub("^[^-]+-\\s*([^,]+),.*", "\\1", data$title_fr)
@@ -99,6 +100,9 @@ get_webstat_with_country <- function(series_keys, api_key) {
   data$ind_salaires <- ifelse(grepl("Salaires", data$title_fr), 1, 0)
   data$ind_M3 <- ifelse(grepl("M3", data$title_fr), 1, 0)
   data$ind_inflation_anticipée <- ifelse(grepl("anticipations", data$title_fr), 1, 0)
+  data$ind_M3 <- ifelse(grepl("M3", data$title_fr), 1, 0)
+  data$ind_octroi_credit_snf <- ifelse(grepl("Octroi de crédits aux entreprises", data$title_fr), 1, 0)
+  data$ind_demande_credit_snf <- ifelse(grepl("Demande de crédits des entreprises", data$title_fr), 1, 0)
   
   data <- data %>%
     dplyr::select(-first_part)
