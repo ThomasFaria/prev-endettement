@@ -87,12 +87,14 @@ get_uni_time_country <- function(data) {
       Taux_immo  = ifelse(time < as.Date("2004-03-31"), NA, Taux_immo),
       salaires  = ifelse(time < as.Date("2006-01-31"), NA, salaires),
       Duree_immo  = ifelse(time < as.Date("2004-01-31"), NA, Duree_immo),
-    inflation_anticipée  = ifelse(time < as.Date("2004-01-31"), NA, inflation_anticipée)
+    inflation_anticipée  = ifelse(time < as.Date("2004-01-31"), NA, inflation_anticipée),
+    Taux_snf  = ifelse(time < as.Date("2010-12-31"), NA, Taux_snf)
     )
+  
   
   return(data_transformed)
 }
-library(tidyr)
+
 
 differencier <- function(df, colonnes = NA) {
   df <- df %>%
