@@ -1,7 +1,7 @@
 source("script/functions/retrieval_webstat.R")
 source("script/functions/utilitaires.R")
 source("script/functions/descriptives_functions.R")
-source("script/functions/ARIMA_fonctions.R")
+source("script/functions/ARIMA_functions.R")
 
 
 library(portes)
