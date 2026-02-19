@@ -4,7 +4,6 @@ source("script/functions/descriptives_functions.R")
 source("script/functions/ARIMA_functions.R")
 source("script/collect_data_webstat&descriptive.R")
 
-
 library(portes)
 library(astsa)
 library(dplyr)
@@ -236,3 +235,6 @@ arima_forecast_plot(
   covid = "none",            
   start_plot = as.Date("2014-01-01") 
 )
+
+
+
