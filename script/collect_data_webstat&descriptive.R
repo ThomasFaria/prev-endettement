@@ -53,6 +53,7 @@ series <- c(
 data <- get_webstat_with_country(series_keys = series, api_key = secrets$api_key)
 unique(data$title_fr)
 
+
 data <- get_uni_time_country(data)
 a <- subset(data, Pays == "France")
 
