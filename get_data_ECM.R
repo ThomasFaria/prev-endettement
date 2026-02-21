@@ -30,6 +30,7 @@ ids <- c(
 data <- get_insee_advanced(ids)
 data <- merge(data, data1, by = "time", all = TRUE)
 
+write.csv(data, "cache/data_insee_bdf.csv", row.names = FALSE)
 
 
 
