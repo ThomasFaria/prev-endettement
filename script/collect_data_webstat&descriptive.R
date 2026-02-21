@@ -57,8 +57,6 @@ unique(data$title_fr)
 data <- get_uni_time_country(data)
 a <- subset(data, Pays == "France")
 
-View(data)
-
 trimestre_par_an_df <- calcul_trimestres_par_an(data, "time")
 print(trimestre_par_an_df)
 
