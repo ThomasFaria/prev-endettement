@@ -19,8 +19,6 @@ data <- read.csv("cache/data_webstat.csv", stringsAsFactors = FALSE)
 data <- data[, c("Pays","time","endettement_menage", "endettement_snf","endettement_agent_nonfinancie_privee")]
 data$time <- as.Date(data$time)
 
-View(data)
-
 
 data <- subset(data, Pays == "France")
 
