@@ -8,5 +8,29 @@ source("script/ARIMA_main.R")
 
 data1 <- read.csv("cache/data_webstat.csv", stringsAsFactors = FALSE)
 data1 <- filter(data1, Pays == "France")
+data1 <- data1 %>% dplyr::select(-Pays)
+data1 <- data1 %>%
+  mutate(
+    time = as.Date(time),
+    time = make_date(year(time), month(time), 1) 
+  )
 
-data2 <- 
+
+ids <- c(
+  "011794755", 
+  "011794746",
+  "011794859",
+  "011794805",
+  "011794792",
+  "001656164",
+  "011794733",
+  "001565530"
+)
+
+data <- get_insee_advanced(ids)
+data <- merge(data, data1, by = "time", all = TRUE)
+
+
+
+
+
