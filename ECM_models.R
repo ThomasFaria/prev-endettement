@@ -8,4 +8,9 @@ source("script/get_data_ECM.R")
 
 data <- read.csv("cache/data_insee_bdf.csv", stringsAsFactors = FALSE)
 
-View(data)
+data$taux_marge <- data$EBE / data$PIB
+data$taux_epargne <- data$epargne2 / data$RDB
+data$Pays <- "France"
+
+################################################
+
