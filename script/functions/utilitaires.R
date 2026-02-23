@@ -20,7 +20,8 @@ get_uni_time_country <- function(data) {
       prix_logement     = ifelse(ind_prix_logement == 1, values, 0),
       salaires          = ifelse(ind_salaires == 1, values, 0),
       M3                = ifelse(ind_M3 == 1, values, 0), 
-      inflation_anticipée = ifelse(ind_inflation_anticipée == 1, values, 0)
+      inflation_anticipée = ifelse(ind_inflation_anticipée == 1, values, 0),
+      EURIBOR = ifelse(ind_EURIBOR == 1, values, 0)
     ) %>%
     group_by(Pays, time) %>%
     summarise(
@@ -42,6 +43,7 @@ get_uni_time_country <- function(data) {
       salaires          = sum( salaires , na.rm = TRUE),
       M3                = sum( M3 , na.rm = TRUE),
       inflation_anticipée = sum(inflation_anticipée, na.rm = TRUE),
+      EURIBOR = sum(EURIBOR, na.rm = TRUE),
       .groups = "drop"
     ) %>%
     
@@ -70,6 +72,7 @@ get_uni_time_country <- function(data) {
       salaires          = sum( salaires , na.rm = TRUE),
       M3                = mean( M3 , na.rm = TRUE),
       inflation_anticipée = sum(inflation_anticipée, na.rm = TRUE),
+      EURIBOR = mean(EURIBOR, na.rm = TRUE),
       .groups = "drop"
     ) %>%
     mutate(
@@ -82,7 +85,7 @@ get_uni_time_country <- function(data) {
     filter(time >= as.Date("1999-03-31")) %>%
     filter(time <= as.Date("2025-06-30")) %>%
     dplyr::select(Pays, time, endettement_menage, endettement_snf, inflation, endettement_agent_nonfinancie_privee, part_menage, epargne, octroi_credit, demande_credit, credit_aplusunan,  Taux_long, chomage
-                  , Taux_immo, Taux_snf, prix_logement, M3, salaires, inflation_anticipée, Duree_immo, octroi_credit_snf, demande_credit_snf)
+                  , Taux_immo, Taux_snf, prix_logement, M3, salaires, inflation_anticipée, Duree_immo, octroi_credit_snf, demande_credit_snf, EURIBOR)
   
   data_transformed <- data_transformed %>%
     mutate(

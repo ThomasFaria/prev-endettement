@@ -79,7 +79,7 @@ get_webstat_with_country <- function(series_keys, api_key) {
   data$title_fr <- ifelse(data$title_fr == "Agrégats monétaires Zone euro, M3 [moyenne mobile 3 mois du glissement annuel] (CVS-CJO)", "M3 zone euro - France, trimestrielle", data$title_fr)
   data$title_fr <- ifelse(data$title_fr == "Demande de crédits des entreprises", "Demande de crédits des entreprises - France, trimestriels", data$title_fr)
   data$title_fr <- ifelse(data$title_fr == "Octroi de crédits aux entreprises", "Octroi de crédits aux entreprises - France, trimestriels", data$title_fr)
-  
+  data$title_fr <- ifelse(data$title_fr == "EURIBOR à 3 mois", "EURIBOR à 3 mois - France, Quotidien", data$title_fr)
   
   data$Pays <- sub("^[^-]+-\\s*([^,]+),.*", "\\1", data$title_fr)
   data$Pays <- ifelse(data$Pays == "Italy", "Italie", data$Pays)
@@ -103,6 +103,7 @@ get_webstat_with_country <- function(series_keys, api_key) {
   data$ind_M3 <- ifelse(grepl("M3", data$title_fr), 1, 0)
   data$ind_octroi_credit_snf <- ifelse(grepl("Octroi de crédits aux entreprises", data$title_fr), 1, 0)
   data$ind_demande_credit_snf <- ifelse(grepl("Demande de crédits des entreprises", data$title_fr), 1, 0)
+  data$ind_EURIBOR <- ifelse(grepl("EURIBOR à 3 mois", data$title_fr), 1, 0)
   
   data <- data %>%
     dplyr::select(-first_part)

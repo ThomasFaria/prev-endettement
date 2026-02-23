@@ -47,15 +47,17 @@ series <- c(
   "RPP.Q.FR.N.ED.00.1.00",
   "PAI.M.FR.N.PR._Z.INPR03.TX",
   "BLS.Q.FR.ALL.O.E.Z.B3.ST.S.FNET",
-  "BLS.Q.FR.ALL.O.E.Z.B3.ZZ.D.FNET"
+  "BLS.Q.FR.ALL.O.E.Z.B3.ZZ.D.FNET",
+  "ECOFI.INR.FR.FID_PA._Z.D"
 )
 
 data <- get_webstat_with_country(series_keys = series, api_key = secrets$api_key)
 unique(data$title_fr)
 
-
 data <- get_uni_time_country(data)
 a <- subset(data, Pays == "France")
+a$EURIBOR
+
 
 trimestre_par_an_df <- calcul_trimestres_par_an(data, "time")
 print(trimestre_par_an_df)
