@@ -50,20 +50,23 @@ get_insee_advanced <- function(ids){
  
  data <- data %>%
    mutate(
-     year    = year(time),
-     quarter = quarter(time)
+     year    = lubridate::year(time),
+     quarter = lubridate::quarter(time)
    ) %>%
-   group_by(year, quarter)%>%
+   group_by(year, quarter) %>%
    summarise(
      PIB   = mean(PIB, na.rm = TRUE),
      climat_affaires = mean(climat_affaires, na.rm = TRUE),
      epargne2        = mean(epargne2, na.rm = TRUE),
      RDB  = mean(RDB, na.rm = TRUE),
      DP   = mean(DP, na.rm = TRUE),
-     EBE   = mean(EBE, na.rm = TRUE),
+     EBE  = mean(EBE, na.rm = TRUE),
      FBCF = mean(FBCF, na.rm = TRUE),
-     defaillances.   = mean(defaillances, na.rm = TRUE),
+     defaillances = mean(defaillances, na.rm = TRUE),
      .groups = "drop"
+   ) %>%
+   mutate(
+     time = lubridate::make_date(year, quarter * 3, 1)
    )
    
  
