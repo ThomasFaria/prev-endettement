@@ -53,7 +53,7 @@ get_insee_advanced <- function(ids){
      year    = year(time),
      quarter = quarter(time)
    ) %>%
-   group_by(Pays, year, quarter)%>%
+   group_by(year, quarter)%>%
    summarise(
      PIB   = mean(PIB, na.rm = TRUE),
      climat_affaires = mean(climat_affaires, na.rm = TRUE),
