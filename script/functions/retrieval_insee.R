@@ -51,6 +51,4 @@ get_insee_advanced <- function(ids){
  return(data)
 }
 
-a <- get_insee_advanced(c("001656164","011794733"))
 
-View(a)
