@@ -48,6 +48,25 @@ get_insee_advanced <- function(ids){
  data <- data %>%
    filter(time >= as.Date("1999-03-01") & time <= as.Date("2025-06-01"))
  
+ data <- data %>%
+   mutate(
+     year    = year(time),
+     quarter = quarter(time)
+   ) %>%
+   group_by(Pays, year, quarter)%>%
+   summarise(
+     PIB   = mean(PIB, na.rm = TRUE),
+     climat_affaires = mean(climat_affaires, na.rm = TRUE),
+     epargne2        = mean(epargne2, na.rm = TRUE),
+     RDB  = mean(RDB, na.rm = TRUE),
+     DP   = mean(DP, na.rm = TRUE),
+     EBE   = mean(EBE, na.rm = TRUE),
+     FBCF = mean(FBCF, na.rm = TRUE),
+     defaillances.   = mean(defaillances, na.rm = TRUE),
+     .groups = "drop"
+   )
+   
+ 
  return(data)
 }
 
