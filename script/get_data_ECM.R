@@ -14,7 +14,6 @@ data1 <- data1 %>%
     time = make_date(year(time), month(time), 1) 
   )
 
-
 ids <- c(
   "011794755", 
   "011794746",
@@ -27,11 +26,12 @@ ids <- c(
 )
 
 data <- get_insee_advanced(ids)
+
 data <- merge(data, data1, by = "time", all = TRUE)
 
 write.csv(data, "cache/data_insee_bdf.csv", row.names = FALSE)
 
-
+View(data)
 
 
 
