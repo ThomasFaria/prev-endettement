@@ -54,19 +54,7 @@ series <- c(
 data <- get_webstat_with_country(series_keys = series, api_key = secrets$api_key)
 unique(data$title_fr)
 
-View(data)
-
-a <- subset(data, ind_salaires == "1")
-
-View(a)
-
 data <- get_uni_time_country(data)
-a <- subset(data, Pays == "France")
-View(a)
-
-
-a$EURIBOR
-
 
 trimestre_par_an_df <- calcul_trimestres_par_an(data, "time")
 print(trimestre_par_an_df)
