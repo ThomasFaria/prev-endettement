@@ -34,7 +34,7 @@ series <- c(
   "CNFSI.Q.N.US.W0.S11.S1.C.L.LE.DETT.T._Z.XDC_R_B1GQ_CY._T.S.V.N._T",
   "ICP.M.FR.N.000000.4.ANR", 
   "FM.M.FR.EUR.FR2.BB.FR10YT_RR.YLD",
-  "STS.Q.FR.S.UNEH.RTT000.4.000",
+  "STBS.Q.FR.S.UNEH.RTT000.FR1.N.PC",
   "CNFSI.Q.Y.FR.W0.S1M.S1.N.B.B8G._Z._Z._Z.XDC_R_B6G_S1M._T.S.V.N._T",
   "BLS.Q.FR.ALL.Z.H.H.B3.ST.S.FNET",
   "BLS.Q.FR.ALL.Z.H.H.B3.ZZ.D.FNET",
@@ -42,7 +42,7 @@ series <- c(
   "MIR1.Q.FR.R.A22FRX.A.R.A.2254FR.EUR.N",
   "MIR1.Q.FR.R.A22FRX.A.D.A.2254FR.EUR.N",
   "MIR1.M.FR.B.AT0.A.R.A.2240U6.EUR.N",
-  "STS.Q.FR.N.INWR.000000.2.ANR",
+  "INW.Q.FR.N.INWR.000000.FR2.GY.IX",
   "BSI.M.U2.Y.V.M30.X.I.U2.2300.Z01.V",
   "RPP.Q.FR.N.ED.00.1.00",
   "PAI.M.FR.N.PR._Z.INPR03.TX",
@@ -54,8 +54,17 @@ series <- c(
 data <- get_webstat_with_country(series_keys = series, api_key = secrets$api_key)
 unique(data$title_fr)
 
+View(data)
+
+a <- subset(data, ind_salaires == "1")
+
+View(a)
+
 data <- get_uni_time_country(data)
 a <- subset(data, Pays == "France")
+View(a)
+
+
 a$EURIBOR
 
 
