@@ -7,8 +7,6 @@ source("script/collect_data_webstat&descriptive.R")
 
 data1 <- read.csv("cache/data_webstat.csv", stringsAsFactors = FALSE)
 
-View(data1)
-
 data1 <- filter(data1, Pays == "France")
 data1 <- data1 %>% dplyr::select(-Pays)
 data1 <- data1 %>%
