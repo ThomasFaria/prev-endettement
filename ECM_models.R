@@ -11,6 +11,10 @@ data <- read.csv("cache/data_insee_bdf.csv", stringsAsFactors = FALSE)
 data$taux_marge <- data$EBE / data$PIB
 data$taux_epargne <- data$epargne2 / data$RDB
 data$Pays <- "France"
+data <- data %>% select(-epargne)
 
 ################################################
+View(data)
+
+result_stationarity <- stationarity_tests(data, c(), countries = c("France"))
 
