@@ -15,6 +15,9 @@ data <- data %>% select(-epargne)
 
 ################################################
 View(data)
+col <- colnames(data)
+print(col)
+col <- col[!names(col) %in% c("time","Pays")]
 
-result_stationarity <- stationarity_tests(data, c(), countries = c("France"))
+result_stationarity <- stationarity_tests(data, col, countries = c("France"))
 
