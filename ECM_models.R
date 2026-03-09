@@ -56,24 +56,16 @@ summary(VAR_model)
 
 ### tester différentes combinaisons####
 
-reg_long <- lm(PIB ~ RDB + chomage, data = data)
-adf.test(residuals(reg_long))  # p-value de 0.05 donc co-intégration valide 
+### combinaison suivante ne fonctionne pas###
+reg_long <- lm(endettement_menage ~ PIB + RDB + FBCF, data = data)
+summary(reg_long)
+adf.test(residuals(reg_long))
 
-### code ECM avec combinaison précédente ###
-
-# calculer l'erreur de correction
-data$ECM_term <- residuals(lm(PIB ~ RDB + chomage, data = data))
-
-# créer les Δvariables
-data$d_PIB <- c(NA, diff(data$PIB))
-data$d_RDB <- c(NA, diff(data$RDB))
-data$d_chomage <- c(NA, diff(data$chomage))
-
-# ECM : ΔPIB dépend de ΔRDB, Δchomage + terme de correction
-ecm_model <- lm(d_PIB ~ d_RDB + d_chomage + lag(ECM_term, 1), data = data)
-summary(ecm_model)
-### Résultat : ΔPIB dépend de :d_RDB → effet court terme positif et très significatif (p < 0.001)
-### d_chomage → effet court terme positif et significatif (p ≈ 1.6e-5)
+#### autre combinaison :### 
+reg_long <- lm(endettement_menage ~ prix_logement + Taux_long + EURIBOR + chomage, data = data)
+summary(reg_long)
+adf.test(residuals(reg_long))
+## résultat : on trouve p-value de 0.07 donc acceptable et R^2 de 0.94##
 
 
 
