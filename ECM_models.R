@@ -66,7 +66,24 @@ reg_long <- lm(endettement_menage ~ prix_logement + Taux_long + EURIBOR + chomag
 summary(reg_long)
 adf.test(residuals(reg_long))
 ## résultat : on trouve p-value de 0.07 donc acceptable et R^2 de 0.94##
+## on teste ECM avec cette combinaison### 
+# calculer le terme de correction
+data$ECM_term <- residuals(reg_long)
 
+# créer les Δvariables pour le court terme
+data$d_endettement <- c(NA, diff(data$endettement_menage))
+data$d_prix_logement <- c(NA, diff(data$prix_logement))
+data$d_Taux_long <- c(NA, diff(data$Taux_long))
+data$d_EURIBOR <- c(NA, diff(data$EURIBOR))
+data$d_chomage <- c(NA, diff(data$chomage))
+
+# ECM : Δendettement dépend des Δvariables + terme de correction lagué
+ecm_model <- lm(d_endettement ~ d_prix_logement + d_Taux_long + d_EURIBOR + d_chomage + lag(ECM_term, 1), data = data)
+summary(ecm_model)
+
+#### Prix logement (+) → si le prix augmente, les ménages s’endettent plus (logique).
+####Taux_long (-) et EURIBOR (-) → hausse des taux → endettement freiné (effet classique du coût du crédit).
+####ECM_term (-) → l’endettement revient vers l’équilibre de long terme après un choc.
 
 
 
