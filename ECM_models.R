@@ -4,7 +4,7 @@ source("script/functions/retrieval_insee.R")
 source("script/functions/utilitaires.R")
 source("script/functions/descriptives_functions.R")
 source("script/functions/ARIMA_functions.R")
-source("script/functions/ECM_function.R")
+source("script/functions/ECM_functions.R")
 source("script/collect_data_webstat&descriptive.R")
 source("script/get_data_ECM.R")
 
@@ -48,8 +48,10 @@ print(I1_vars_snf)
 
 results  <- test_cointegration(data, y = "endettement_menage", I1_vars_menage )
 results <- results[results$adf_pvalue <= 0.10, ]
+results <- results[results$bp_pvalue <= 0.10, ]
 View(results)
 nrow(results)
+
 
 
 
