@@ -101,7 +101,7 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
       paste0(
         "`diff_", y, "` ~ ",
         paste0("diff_", vars, collapse = " + "),
-        " + ECT"
+        " + lag(ECT,1)"
       )
     )
     
@@ -109,20 +109,27 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
     
     # Filtre ECT
     
-    lambda_ECT <- coef(reg_ecm)["ECT"]
-    pval_ECT <- summary(reg_ecm)$coefficients["ECT", "Pr(>|t|)"]
+    lambda_ECT <- coef(reg_ecm)["lag(ECT, 1)"]
+    pval_ECT <- summary(reg_ecm)$coefficients["lag(ECT, 1)", "Pr(>|t|)"]
     
     if (!is.na(lambda_ECT) && lambda_ECT < 0 && pval_ECT < seuil_pval) {
       
       aic <- AIC(reg_ecm)
       bic <- BIC(reg_ecm)
+      adf <- adf.test(residuals(reg_ecm))
+      bg <- bgtest(reg_ecm, order = 4)
+      bp <- bptest(reg_ecm)
+      
       
       ligne <- cbind(
         results[i, ],
         lambda_ECT = lambda_ECT,
         pval_ECT = pval_ECT,
         AIC = aic,
-        BIC = bic
+        BIC = bic,
+        adf_pvalue_ecm = adf$p.value,
+        bg_pvalue_ecm = bg$p.value,
+        bp_pvalue_ecm = bp$p.value 
       )
       
       # récupérer coef et pvalue
@@ -163,7 +170,7 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
 
 
 
-ECM_compute <- function(y = "endettement_menage", vars, data){
+ECM_compute <- function(y = "endettement_menage",ct_vars, vars, data){
   
   formula_lt <- as.formula(
     paste0("`", y, "` ~ ", paste(paste0("`", vars, "`"), collapse = " + "))
@@ -180,20 +187,36 @@ ECM_compute <- function(y = "endettement_menage", vars, data){
   for (v in vars) {
     data_diff[[paste0("diff_", v)]] <- c(NA, diff(data_diff[[v]]))
   }
+  
+  for (v in ct_vars) {
+    data_diff[[paste0("diff_", v)]] <- c(NA, diff(data_diff[[v]]))
+  }
+  
   data_diff[[paste0("diff_", y)]] <- c(NA, diff(data_diff[[y]]))
   
-  # aligner ECT avec les différences (en supprimant la première ligne)
+  
   data_diff <- data_diff[-1, ]   # on enlève la première ligne
   data_diff$ECT <- ECT[-1]  
+  data_diff$lag_diff_endettement_menage <- c(NA, head(data_diff$diff_endettement_menage, -1))
   
   # -----------------------------
-  # Modèle ECM
+  # Modèle ECM avec variables de contrôle
   # -----------------------------
   
+  # créer la liste des variables différenciées
+  diff_vars <- paste0("diff_", vars)
+  diff_ct_vars <- paste0("diff_", ct_vars)
+  
+  # ajouter les variables de contrôle si elles existent
+  if (!missing(ct_vars) && length(ct_vars) > 0) {
+    diff_vars <- c(diff_vars, ct_vars)
+  }
+  
+  # créer la formule ECM
   formula_ecm <- as.formula(
     paste0(
       "`diff_", y, "` ~ ",
-      paste0("diff_", vars, collapse = " + "),
+      paste(diff_vars, collapse = " + "),
       " + ECT"
     )
   )

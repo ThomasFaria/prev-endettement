@@ -37,10 +37,10 @@ I1_vars <- unique(sub(".* - ", "", vars_ns))
 
 print(I1_vars)
 
-I1_vars_menage <-  I1_vars[!I1_vars %in% c("defaillances", "EBE", "FBCF", "endettement_menage", "endettement_snf","endettement_agent_nonfinancie_privee", "part_menage", "demande_credit_snf", "taux_marge")]
+I1_vars_menage <-  I1_vars[!I1_vars %in% c("defaillances", "EBE", "FBCF", "endettement_menage", "endettement_snf","endettement_agent_nonfinancie_privee", "part_menage", "demande_credit_snf", "taux_marge", "year","quarter")]
 print(I1_vars_menage)
 
-I1_vars_snf <- I1_vars[!I1_vars %in% c("epargne2","taux_epargne","RDB", "credit_aplusunan", "endettement_snf", "endettement_menage","endettement_agent_nonfinancie_privee", "part_menage","Taux_immo", "Duree_immo", "prix_logement")]
+I1_vars_snf <- I1_vars[!I1_vars %in% c("epargne2","taux_epargne","RDB", "credit_aplusunan", "endettement_snf", "endettement_menage","endettement_agent_nonfinancie_privee", "part_menage","Taux_immo", "Duree_immo", "prix_logement", "year","quarter")]
 print(I1_vars_snf)
 
 
@@ -56,10 +56,10 @@ models_valides <- test_ECM(y = "endettement_menage", data, results, seuil_pval =
 nrow(models_valides)
 View(models_valides)
 
-############################
 
+data
 
-
+ECM_compute(y = "endettement_menage", c("epargne2", "Taux_long", "EURIBOR"), c("lag_diff_endettement_menage"), data)
 
 
 
