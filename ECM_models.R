@@ -14,7 +14,10 @@ data <- read.csv("cache/data_insee_bdf.csv", stringsAsFactors = FALSE)
 data$taux_marge <- data$EBE / data$PIB
 data$taux_epargne <- data$epargne2 / data$RDB
 data$Pays <- "France"
-data <- data %>% dplyr::select(-epargne)
+data <- data %>% dplyr::select(-epargne, -Taux_snf)
+data <- na.omit(data)
+
+
 
 
 ########### Stationarité #############
@@ -37,7 +40,7 @@ I1_vars <- unique(sub(".* - ", "", vars_ns))
 print(I1_vars)
 
 
-I1_vars_menage <-  I1_vars[!I1_vars %in% c("defaillances", "EBE", "FBCF", "endettement_menage", "endettement_snf","endettement_agent_nonfinancie_privee", "part_menage", "Taux_snf", "demande_credit_snf", "taux_marge")]
+I1_vars_menage <-  I1_vars[!I1_vars %in% c("defaillances", "EBE", "FBCF", "endettement_menage", "endettement_snf","endettement_agent_nonfinancie_privee", "part_menage", "demande_credit_snf", "taux_marge")]
 print(I1_vars_menage)
 
 I1_vars_snf <- I1_vars[!I1_vars %in% c("epargne2","taux_epargne","RDB", "credit_aplusunan", "endettement_snf", "endettement_menage","endettement_agent_nonfinancie_privee", "part_menage","Taux_immo", "Duree_immo", "prix_logement")]
@@ -47,9 +50,12 @@ print(I1_vars_snf)
 results  <- test_cointegration(data, y = "endettement_menage", I1_vars_menage )
 results <- results[results$adf_pvalue <= 0.10, ]
 results <- results[results$bp_pvalue <= 0.10, ]
+results <- results[results$bg_pvalue <= 0.10, ]
 View(results)
 nrow(results)
 
+
+test_ECM(y = "endettement_menage", data, results, seuil_pval = 0.1)
 
 
 
