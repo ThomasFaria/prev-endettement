@@ -18,8 +18,6 @@ data <- data %>% dplyr::select(-epargne, -Taux_snf)
 data <- na.omit(data)
 
 
-
-
 ########### Stationarité #############
 
 col <- colnames(data)
@@ -39,7 +37,6 @@ I1_vars <- unique(sub(".* - ", "", vars_ns))
 
 print(I1_vars)
 
-
 I1_vars_menage <-  I1_vars[!I1_vars %in% c("defaillances", "EBE", "FBCF", "endettement_menage", "endettement_snf","endettement_agent_nonfinancie_privee", "part_menage", "demande_credit_snf", "taux_marge")]
 print(I1_vars_menage)
 
@@ -57,6 +54,9 @@ nrow(results)
 
 models_valides <- test_ECM(y = "endettement_menage", data, results, seuil_pval = 0.1)
 nrow(models_valides)
+View(models_valides)
+
+############################
 
 
 
@@ -65,8 +65,7 @@ nrow(models_valides)
 
 
 
-
-
+############################
 
 ### combinaison suivante ne fonctionne pas###
 reg_long <- lm(endettement_menage ~ PIB + RDB + FBCF, data = data)

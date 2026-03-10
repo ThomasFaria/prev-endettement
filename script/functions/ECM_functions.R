@@ -113,12 +113,62 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
     pval <- summary(reg_ecm)$coefficients["ECT", "Pr(>|t|)"]
     
     if (!is.na(lambda) && lambda < 0 && pval < seuil_pval) {
+      aic <- AIC(reg_ecm)
+      bic <- BIC(reg_ecm)
+      
       models_valides <- rbind(
         models_valides,
-        cbind(results[i, ], lambda = lambda, pval = pval)
+        cbind(results[i, ], lambda = lambda, pval = pval, AIC = aic, BIC = bic)
       )
     }
   }
   
+  models_valides <- models_valides[order(models_valides$BIC), ]
   return(models_valides)
 }
+
+
+
+ECM_compute <- function(y = "endettement_menage", vars, data){
+  
+  formula_lt <- as.formula(
+    paste0("`", y, "` ~ ", paste(paste0("`", vars, "`"), collapse = " + "))
+  )
+  
+  reg_lt <- lm(formula_lt, data = data)
+  
+  # calcul du ECT
+  reg_lt <- lm(formula_lt, data = data)
+  ECT <- residuals(reg_lt)
+  
+  # création des différences
+  data_diff <- data
+  for (v in vars) {
+    data_diff[[paste0("diff_", v)]] <- c(NA, diff(data_diff[[v]]))
+  }
+  data_diff[[paste0("diff_", y)]] <- c(NA, diff(data_diff[[y]]))
+  
+  # aligner ECT avec les différences (en supprimant la première ligne)
+  data_diff <- data_diff[-1, ]   # on enlève la première ligne
+  data_diff$ECT <- ECT[-1]  
+  
+  # -----------------------------
+  # Modèle ECM
+  # -----------------------------
+  
+  formula_ecm <- as.formula(
+    paste0(
+      "`diff_", y, "` ~ ",
+      paste0("diff_", vars, collapse = " + "),
+      " + ECT"
+    )
+  )
+  
+  reg_ecm <- lm(formula_ecm, data = data_diff)
+  return(reg_ecm)
+}
+
+
+
+
+
