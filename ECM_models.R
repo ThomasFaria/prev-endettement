@@ -1,14 +1,13 @@
-library(dplyr)
-library(tseries)
-library(urca)
 
 source("script/functions/retrieval_webstat.R")
 source("script/functions/retrieval_insee.R")
 source("script/functions/utilitaires.R")
 source("script/functions/descriptives_functions.R")
 source("script/functions/ARIMA_functions.R")
+source("script/functions/ECM_function.R")
 source("script/collect_data_webstat&descriptive.R")
 source("script/get_data_ECM.R")
+
 
 data <- read.csv("cache/data_insee_bdf.csv", stringsAsFactors = FALSE)
 
@@ -47,48 +46,10 @@ I1_vars_snf <- I1_vars[!I1_vars %in% c("epargne2","taux_epargne","RDB", "credit_
 print(I1_vars_snf)
 
 
-test_cointegration <- function(data, y = "endettement_menage", vars){
-
-results <- data.frame()
-
-for (k in 2:5) {
-  
-  combs <- combn(vars, k, simplify = FALSE)
-  
-  for (c in combs) {
-    
-    x <- c
-    
-      formula <- as.formula(
-        paste(y, "~", paste(x, collapse = " + "))
-      )
-    
-      reg <- lm(formula, data = data)
-    
-      r2 <- summary(reg)$r.squared
-    
-      adf <- adf.test(residuals(reg))
-    
-      results <- rbind(
-      results,
-        data.frame(
-          y = y,
-          x = paste(x, collapse = ", "),
-          k = k,
-          R2 = r2,
-          adf_pvalue = adf$p.value
-        )
-      )
-    }
-  }
-
-  results <- results[order(results$adf_pvalue), ]
-  return(result)
-}
-
-
-test_cointegration(data, y = "endettement_menage", I1_vars_menage )
-
+results  <- test_cointegration(data, y = "endettement_menage", I1_vars_menage )
+results <- results[results$adf_pvalue <= 0.10, ]
+View(results)
+nrow(results)
 
 
 
