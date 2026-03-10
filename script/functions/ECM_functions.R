@@ -18,7 +18,14 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
       
       r2 <- summary(reg)$r.squared
       
+      # Test ADF sur les résidus (cointégration)
       adf <- adf.test(residuals(reg))
+      
+      # Test autocorrélation
+      bg <- bgtest(reg, order = 4)
+      
+      # Test hétéroscédasticité
+      bp <- bptest(reg)
       
       results <- rbind(
         results,
@@ -27,7 +34,9 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
           x = paste(x, collapse = ", "),
           k = k,
           R2 = r2,
-          adf_pvalue = adf$p.value
+          adf_pvalue = adf$p.value,
+          bg_pvalue = bg$p.value,
+          bp_pvalue = bp$p.value
         )
       )
     }
