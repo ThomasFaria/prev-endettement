@@ -55,7 +55,15 @@ View(results)
 nrow(results)
 
 
-test_ECM(y = "endettement_menage", data, results, seuil_pval = 0.1)
+models_valides <- test_ECM(y = "endettement_menage", data, results, seuil_pval = 0.1)
+nrow(models_valides)
+
+
+
+
+
+
+
 
 
 
