@@ -27,8 +27,6 @@ col <- col[sapply(data[col], is.numeric)]
 result_stationarity <- stationarity_tests(data, col, countries = c("France"))
 print(result_stationarity)
 
-View(result_stationarity)
-
 ############## Co-intégrité ###########
 
 ##récupérer variables non-stationnaires####
@@ -51,8 +49,6 @@ results <- results[results$adf_pvalue <= 0.10, ]
 results <- results[results$bp_pvalue <= 0.10, ]
 View(results)
 nrow(results)
-
-
 
 
 
