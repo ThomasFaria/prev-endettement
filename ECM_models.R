@@ -17,16 +17,6 @@ data$taux_epargne <- data$epargne2 / data$RDB
 data$Pays <- "France"
 data <- data %>% dplyr::select(-epargne)
 
-<<<<<<< HEAD
-View(data)
-################################################
-=======
-data <- data %>% select(-one_of("epargne"))
-colnames(data)
-View(data)
-################################################
-View(data)
->>>>>>> 02efddba5804541756886b38dc9578aa13995037
 
 ########### Stationarité #############
 
