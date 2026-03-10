@@ -188,8 +188,10 @@ ECM_compute <- function(y = "endettement_menage",ct_vars, vars, data){
     data_diff[[paste0("diff_", v)]] <- c(NA, diff(data_diff[[v]]))
   }
   
+  if (!missing(ct_vars) && length(ct_vars) > 0) {
   for (v in ct_vars) {
     data_diff[[paste0("diff_", v)]] <- c(NA, diff(data_diff[[v]]))
+  }
   }
   
   data_diff[[paste0("diff_", y)]] <- c(NA, diff(data_diff[[y]]))
@@ -205,18 +207,19 @@ ECM_compute <- function(y = "endettement_menage",ct_vars, vars, data){
   
   # créer la liste des variables différenciées
   diff_vars <- paste0("diff_", vars)
-  diff_ct_vars <- paste0("diff_", ct_vars)
   
-  # ajouter les variables de contrôle si elles existent
   if (!missing(ct_vars) && length(ct_vars) > 0) {
-    diff_vars <- c(diff_vars, ct_vars)
+  diff_ct_vars <- paste0("diff_", ct_vars)
   }
+  
+
+
   
   # créer la formule ECM
   formula_ecm <- as.formula(
     paste0(
       "`diff_", y, "` ~ ",
-      paste(diff_vars, collapse = " + "),
+      paste(diff_vars, collapse = " + "), paste(diff_ct_vars, collapse = " + "),
       " + ECT"
     )
   )

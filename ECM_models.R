@@ -56,12 +56,7 @@ models_valides <- test_ECM(y = "endettement_menage", data, results, seuil_pval =
 nrow(models_valides)
 View(models_valides)
 
-
-data
-
 ECM_compute(y = "endettement_menage", c("epargne2", "Taux_long", "EURIBOR"), c("lag_diff_endettement_menage"), data)
-
-
 
 
 
