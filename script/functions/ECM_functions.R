@@ -50,25 +50,17 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
 
 
 
-
 test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) {
   
-  models_valides <- data.frame()  # stockage des modèles valides
+  models_valides <- data.frame()
   
   for (i in 1:nrow(results)) {
     
-    # Récupération des variables explicatives
     vars_raw <- as.character(results$x[i])
     vars_raw <- trimws(vars_raw)
-    
-    # Découper les variables par virgule
     vars <- trimws(unlist(strsplit(vars_raw, ",")))
     
-    # Vérification que la ligne contient au moins une variable
-    if (length(vars) == 0 || all(vars == "")) {
-      warning(paste("La ligne", i, "n’a pas de variables valides, elle est ignorée"))
-      next
-    }
+    if (length(vars) == 0 || all(vars == "")) next
     
     # -----------------------------
     # Modèle long terme
@@ -78,24 +70,22 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
     )
     
     reg_lt <- lm(formula_lt, data = data)
-    
-    # calcul du ECT
-    reg_lt <- lm(formula_lt, data = data)
     ECT <- residuals(reg_lt)
     
-    # création des différences
+    # différences
     data_diff <- data
+    
     for (v in vars) {
       data_diff[[paste0("diff_", v)]] <- c(NA, diff(data_diff[[v]]))
     }
+    
     data_diff[[paste0("diff_", y)]] <- c(NA, diff(data_diff[[y]]))
     
-    # aligner ECT avec les différences (en supprimant la première ligne)
-    data_diff <- data_diff[-1, ]   # on enlève la première ligne
-    data_diff$ECT <- ECT[-1]  
+    data_diff <- data_diff[-1, ]
+    data_diff$ECT <- ECT[-1]
     
     # -----------------------------
-    # Modèle ECM
+    # ECM
     # -----------------------------
     
     formula_ecm <- as.formula(
@@ -108,22 +98,49 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
     
     reg_ecm <- lm(formula_ecm, data = data_diff)
     
-    # Filtre sur ECT : signe négatif et p-value < seuil
     lambda <- coef(reg_ecm)["ECT"]
-    pval <- summary(reg_ecm)$coefficients["ECT", "Pr(>|t|)"]
+    pval_ect <- summary(reg_ecm)$coefficients["ECT", "Pr(>|t|)"]
     
-    if (!is.na(lambda) && lambda < 0 && pval < seuil_pval) {
+    if (!is.na(lambda) && lambda < 0 && pval_ect < seuil_pval) {
+      
       aic <- AIC(reg_ecm)
       bic <- BIC(reg_ecm)
       
-      models_valides <- rbind(
-        models_valides,
-        cbind(results[i, ], lambda = lambda, pval = pval, AIC = aic, BIC = bic)
+      summ <- summary(reg_ecm)$coefficients
+      
+      df <- cbind(
+        results[i, ],
+        lambda = lambda,
+        pval_ect = pval_ect,
+        AIC = aic,
+        BIC = bic
       )
+      
+      # ajouter coef + pvalue pour chaque variable
+      for (v in vars) {
+        
+        var_name <- paste0("diff_", v)
+        
+        if (var_name %in% rownames(summ)) {
+          
+          coef_v <- summ[var_name, "Estimate"]
+          pval_v <- summ[var_name, "Pr(>|t|)"]
+          
+          df[[paste0("coef_", v)]] <- paste0(round(coef_v,4), " (", round(pval_v,4), ")")
+          
+        } else {
+          
+          df[[paste0("coef_", v)]] <- NA
+          
+        }
+      }
+      
+      models_valides <- rbind(models_valides, df)
     }
   }
   
   models_valides <- models_valides[order(models_valides$BIC), ]
+  
   return(models_valides)
 }
 
