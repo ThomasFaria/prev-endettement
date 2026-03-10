@@ -69,7 +69,6 @@ get_insee_advanced <- function(ids){
      time = lubridate::make_date(year, quarter * 3, 1)
    )
   
- data <- data %>% select(-year,-quarter)
  
  return(data)
 }
