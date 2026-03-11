@@ -95,8 +95,21 @@ bptest(reg)
 AIC(reg)
 BIC(reg)
 
-ECM3 <- ECM_compute(y = "endettement_menage", vars = c("Taux_long", "chomage", "EURIBOR", "taux_epargne"), 
+ECM2BIS <- ECM_compute(y = "endettement_menage", vars = c("Taux_long", "chomage", "EURIBOR", "taux_epargne"), 
                     I1_vars = c("lag1_endettement_menage", "EURIBOR", "taux_epargne"),
+                    I0_vars = c(), data)
+summary(ECM2BIS$long_term)
+summary(ECM2BIS$ECM)
+reg <- ECM2BIS$ECM
+adf.test(reg$residuals)
+bgtest(reg, 4)
+bptest(reg)
+AIC(reg)
+BIC(reg)
+
+
+ECM3 <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "EURIBOR", "taux_epargne"), 
+                    I1_vars = c("Taux_immo", "salaires", "EURIBOR", "taux_epargne"),
                     I0_vars = c(), data)
 summary(ECM3$long_term)
 summary(ECM3$ECM)
@@ -107,13 +120,12 @@ bptest(reg)
 AIC(reg)
 BIC(reg)
 
-
-ECM4 <- ECM_compute(y = "endettement_menage", vars = c("Taux_long", "chomage", "EURIBOR", "taux_epargne"), 
+ECM3BIS <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "EURIBOR", "taux_epargne"), 
                     I1_vars = c("lag1_endettement_menage", "EURIBOR", "taux_epargne"),
-                    I0_vars = c("octroi_credit"), data)
-summary(ECM4$long_term)
-summary(ECM4$ECM)
-reg <- ECM4$ECM
+                    I0_vars = c(), data)
+summary(ECM3BIS$long_term)
+summary(ECM3BIS$ECM)
+reg <- ECM3BIS$ECM
 adf.test(reg$residuals)
 bgtest(reg, 4)
 bptest(reg)
