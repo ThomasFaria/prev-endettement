@@ -45,19 +45,22 @@ print(I1_vars_snf)
 
 
 results  <- test_cointegration(data, y = "endettement_menage", I1_vars_menage )
+View(results)
 results <- results[results$adf_pvalue <= 0.10, ]
 results <- results[results$bp_pvalue <= 0.10, ]
 results <- results[results$bg_pvalue <= 0.10, ]
-View(results)
+results <- results[results$coef_Taux_long < 0 | is.na(results$coef_Taux_long), ]
+results <- results[results$coef_EURIBOR < 0 | is.na(results$coef_EURIBOR), ]
+nrow(results)
+#results <- results[results$adf_pvalue <= 0.05, ]
+#results <- results[results$bp_pvalue <= 0.05, ]
+#results <- results[results$bg_pvalue <= 0.05, ]
 nrow(results)
 
-
 models_valides <- test_ECM(y = "endettement_menage", data, results, seuil_pval = 0.1)
-models_valides <- models_valides[models_valides$adf_pvalue_ecm <= 0.10, ]
-models_valides <- models_valides[models_valides$bp_pvalue_ecm <= 0.10, ]
-models_valides <- models_valides[models_valides$bg_pvalue_ecm <= 0.10, ]
-nrow(models_valides)
+models_valides <- models_valides[order(models_valides$BIC), ]
 View(models_valides)
+
 
 ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I1_vars = c(), I0_vars = c(), data)
 summary(ECM1$ECM)
