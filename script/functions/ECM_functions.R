@@ -8,6 +8,9 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
     
     for (c in combs) {
       
+      data <- subset(data, select = c(y, combs))
+      data <- na.omit(data)
+      
       x <- c
       
       formula <- as.formula(
@@ -72,6 +75,12 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
 
 ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = NULL, data){ 
   ct_vars <- I1_vars 
+  
+  All <- unique(c(y, vars, I1_vars, I0_vars))
+  data <- subset(data, select = All)
+  data <- na.omit(data)
+  
+  
   # -----------------------------
   # Régression long terme
   # -----------------------------
@@ -190,6 +199,9 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
   
   models_valides <- data.frame()
   all_vars <- unique(trimws(unlist(strsplit(results$x, ","))))
+  
+  data <- subset(data, select = c(all_vars,y)) 
+  data <- na.omit(data)
   
   for (i in 1:nrow(results)) {
     

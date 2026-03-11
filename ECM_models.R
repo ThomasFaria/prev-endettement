@@ -15,7 +15,6 @@ data$taux_marge <- data$EBE / data$PIB
 data$taux_epargne <- data$epargne2 / data$RDB
 data$Pays <- "France"
 data <- data %>% dplyr::select(-epargne, -Taux_snf)
-data <- na.omit(data)
 
 
 ########### Stationarité #############
