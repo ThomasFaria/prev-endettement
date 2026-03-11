@@ -73,7 +73,7 @@ adf.test(reg$residuals)
 bgtest(reg, 4)
 bptest(reg)
 
-ECM4 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "EURIBOR", "Taux_long"), I1_vars = c("lag1_endettement_menage", "lag2_Taux_long"), I0_vars = c(), data)
+ECM4 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "EURIBOR", "Taux_long"), I1_vars = c("lag1_endettement_menage"), I0_vars = c("octroi_credit"), data)
 summary(ECM4$ECM)
 reg <- ECM4$ECM
 adf.test(reg$residuals)

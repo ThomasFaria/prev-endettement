@@ -164,7 +164,7 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
   
 }
 
-ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, data){ 
+ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = NULL, data){ 
   ct_vars <- I1_vars 
   # -----------------------------
   # Régression long terme
@@ -226,6 +226,21 @@ ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, data){
     } 
   } 
   
+  lag_vars2 <- NULL 
+  if(!is.null(I0_vars)){
+    lag_vars2 <- I0_vars[grepl("^lag[0-9]+_", I0_vars)] 
+    for(lv in lag_vars2){
+      lag_val2 <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv)) 
+      original_var <- sub("^lag[0-9]+_", "", lv) 
+      
+      # créer la colonne lag directement
+      data_diff[[lv]] <- c(
+        rep(NA, lag_val2),
+        head(data_diff[[original_var]], -lag_val2)
+      ) 
+    } 
+  }
+  
   # -----------------------------
   # Alignement
   # -----------------------------
@@ -243,7 +258,9 @@ ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, data){
       diff_ct_vars <- paste0("diff_", ct_nolag) 
     } 
   } 
-  all_vars <- c(diff_vars, diff_ct_vars, lag_vars) 
+  
+  
+  all_vars <- c(diff_vars, diff_ct_vars, lag_vars, I0_vars, lag_vars2) 
   all_vars <- all_vars[!is.na(all_vars)] 
   all_vars <- all_vars[nchar(all_vars) > 0] 
   
