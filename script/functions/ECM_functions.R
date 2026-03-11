@@ -89,14 +89,6 @@ ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars 
   # différence de Y
   data_diff[[paste0("diff_", y)]] <- c(NA, diff(data[[y]])) 
   
-  # différences des variables LT
-  for(v in vars){
-    diff_name <- paste0("diff_", v) 
-    if(!(diff_name %in% names(data_diff))){
-      data_diff[[diff_name]] <- c(NA, diff(data[[v]])) 
-    } 
-  } 
-  
   # différences des variables CT (hors lag)
   if(!is.null(ct_vars)){
     ct_no_lag <- ct_vars[!grepl("^lag", ct_vars)] 
@@ -156,7 +148,6 @@ ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars 
   # -----------------------------
   # Variables ECM (inchangées)
   # -----------------------------
-  diff_vars <- paste0("diff_", vars) 
   diff_ct_vars <- NULL 
   if(!is.null(ct_vars)){
     ct_nolag <- ct_vars[!grepl("^lag", ct_vars)] 
@@ -166,7 +157,7 @@ ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars 
   } 
   
   
-  all_vars <- c(diff_vars, diff_ct_vars, lag_vars, I0_vars, lag_vars2) 
+  all_vars <- c( diff_ct_vars, lag_vars, I0_vars, lag_vars2) 
   all_vars <- all_vars[!is.na(all_vars)] 
   all_vars <- all_vars[nchar(all_vars) > 0] 
   
