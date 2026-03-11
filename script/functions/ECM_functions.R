@@ -1,19 +1,14 @@
 test_cointegration <- function(data, y = "endettement_menage", vars){
   
-  # Colonnes globales
-  base_cols <- c("y","x","k","R2","adf_pvalue","bg_pvalue","bp_pvalue")
-  coef_cols <- paste0("coef_", vars)
-  pval_cols <- paste0("pval_", vars)
-  all_cols <- c(base_cols, coef_cols, pval_cols)
-  
-  results <- data.frame(matrix(ncol = length(all_cols), nrow = 0))
-  colnames(results) <- all_cols
+  results <- data.frame()
   
   for (k in 2:5) {
     
     combs <- combn(vars, k, simplify = FALSE)
     
-    for (x in combs) {
+    for (c in combs) {
+      
+      x <- c
       
       formula <- as.formula(
         paste(y, "~", paste(x, collapse = " + "))
@@ -22,42 +17,57 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
       reg <- lm(formula, data = data)
       
       r2 <- summary(reg)$r.squared
+      
+      # Test ADF sur les résidus (cointégration)
       adf <- adf.test(residuals(reg))
+      
+      # Test autocorrélation
       bg <- bgtest(reg, order = 4)
+      
+      # Test hétéroscédasticité
       bp <- bptest(reg)
       
-      # Créer la ligne vide avec toutes les colonnes
-      ligne <- as.list(rep(NA, length(all_cols)))
-      names(ligne) <- all_cols
+      # Création de la ligne complète
+      ligne <- data.frame(
+        y = y,
+        x = paste(x, collapse = ", "),
+        k = k,
+        R2 = r2,
+        adf_pvalue = adf$p.value,
+        bg_pvalue = bg$p.value,
+        bp_pvalue = bp$p.value,
+        stringsAsFactors = FALSE
+      )
       
-      # Remplir les stats globales
-      ligne$y <- y
-      ligne$x <- paste(x, collapse = ", ")
-      ligne$k <- k
-      ligne$R2 <- r2
-      ligne$adf_pvalue <- adf$p.value
-      ligne$bg_pvalue <- bg$p.value
-      ligne$bp_pvalue <- bp$p.value
-      
-      # Remplir les coef et pval
-      for (v in x) {
+      # récupérer coef et pvalue pour chaque variable possible
+      for (v in vars) {
+        
         if (v %in% rownames(summary(reg)$coefficients)) {
-          ligne[[paste0("coef_", v)]] <- coef(reg)[v]
-          ligne[[paste0("pval_", v)]] <- summary(reg)$coefficients[v, "Pr(>|t|)"]
+          
+          coef_var <- coef(reg)[v]
+          pval_var <- summary(reg)$coefficients[v, "Pr(>|t|)"]
+          
+        } else {
+          
+          coef_var <- NA
+          pval_var <- NA
+          
         }
+        
+        ligne[[paste0("coef_", v)]] <- coef_var
+        ligne[[paste0("pval_", v)]] <- pval_var
       }
       
-      # Ajouter la ligne au data.frame
-      results <- rbind(results, as.data.frame(ligne, stringsAsFactors = FALSE))
+      # ajouter la ligne au tableau
+      results <- rbind(results, ligne)
+      
     }
   }
   
-  # Trier par ADF p-value pour mettre les modèles cointégrés en haut
   results <- results[order(results$adf_pvalue), ]
   
   return(results)
 }
-
 
 
 ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = NULL, data){ 
