@@ -280,7 +280,7 @@ ECM_compute <- function(y = "endettement_menage", vars, ct_vars = NULL, data){
     paste0(
       "diff_", y, " ~ ",
       paste(all_vars, collapse = " + "),
-      " + ECT"
+      " + lag(ECT,1)"
     )
   )
   
