@@ -72,11 +72,17 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
   return(results)
 }
 
+clean_name <- function(x) {
+  x <- gsub("^lag[0-9]+_", "", x)
+  return(x)
+}
 
 ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = NULL, data){ 
   ct_vars <- I1_vars 
   
-  All <- unique(c(y, vars, I1_vars, I0_vars))
+  I1_varsB <- unique(unlist(sapply(I1_vars, clean_name)))
+  I0_varsB <- unique(unlist(sapply(I0_vars, clean_name)))
+  All <- unique(c(y, vars, I1_varsB, I0_varsB))
   data <- subset(data, select = All)
   data <- na.omit(data)
   
