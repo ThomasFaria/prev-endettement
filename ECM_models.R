@@ -62,9 +62,21 @@ View(models_valides)
 
 
 ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I1_vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I0_vars = c(), data)
-summary(ECM1$ECM)
+summary(ECM1$long_term)
 summary(ECM1$ECM)
 reg <- ECM1$ECM
+adf.test(reg$residuals)
+bgtest(reg, 4)
+bptest(reg)
+AIC(reg)
+BIC(reg)
+
+ECM1BIS <- ECM_compute(y = "endettement_menage", 
+                       vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"),
+                       I1_vars = c( "lag1_endettement_menage", "EURIBOR", "chomage"), I0_vars = c(), data)
+summary(ECM1BIS$long_term)
+summary(ECM1BIS$ECM)
+reg <- ECM1BIS$ECM
 adf.test(reg$residuals)
 bgtest(reg, 4)
 bptest(reg)
