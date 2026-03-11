@@ -287,8 +287,8 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
           
         }
         
-        ligne[[paste0("coef_", v)]] <- coef_var
-        ligne[[paste0("pval_", v)]] <- pval_var
+        ligne[[paste0("coef_", v, "_ecm")]] <- coef_var
+        ligne[[paste0("pval_", v, "_ecm")]] <- pval_var
       }
       
       models_valides <- rbind(models_valides, ligne)
