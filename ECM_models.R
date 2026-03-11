@@ -59,13 +59,13 @@ models_valides <- models_valides[models_valides$bg_pvalue_ecm <= 0.10, ]
 nrow(models_valides)
 View(models_valides)
 
-ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), ct_vars = c(), data)
+ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I1_vars = c(), I0_vars = c(), data)
 summary(ECM1$ECM)
 
-ECM2 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "Taux_long", "EURIBOR"), ct_vars = c(), data)
+ECM2 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "Taux_long", "EURIBOR"), I1_vars = c(), I0_vars = c(), data)
 summary(ECM2$ECM)
 
-ECM3 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "Taux_long", "EURIBOR"), I1_vars = c("lag1_endettement_menage"), data)
+ECM3 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "Taux_long", "EURIBOR"), I1_vars = c("lag1_endettement_menage"), I0_vars = c(), data)
 summary(ECM3$long_term)
 summary(ECM3$ECM)
 reg <- ECM3$ECM
@@ -73,7 +73,7 @@ adf.test(reg$residuals)
 bgtest(reg, 4)
 bptest(reg)
 
-ECM4 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "EURIBOR", "Taux_long"), ct_vars = c("lag1_endettement_menage", "lag2_Taux_long"), data)
+ECM4 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "EURIBOR", "Taux_long"), I1_vars = c("lag1_endettement_menage", "lag2_Taux_long"), I0_vars = c(), data)
 summary(ECM4$ECM)
 reg <- ECM4$ECM
 adf.test(reg$residuals)
