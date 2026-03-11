@@ -62,27 +62,46 @@ models_valides <- models_valides[order(models_valides$BIC), ]
 View(models_valides)
 
 
-ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I1_vars = c(), I0_vars = c(), data)
+ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I1_vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I0_vars = c(), data)
 summary(ECM1$ECM)
+summary(ECM1$ECM)
+reg <- ECM1$ECM
+adf.test(reg$residuals)
+bgtest(reg, 4)
+bptest(reg)
+AIC(reg)
+BIC(reg)
 
-ECM2 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "Taux_long", "EURIBOR"), I1_vars = c(), I0_vars = c(), data)
+ECM2 <- ECM_compute(y = "endettement_menage", vars = c("Taux_long", "chomage", "Taux_immo", "EURIBOR", "taux_epargne"), I1_vars = c( "Taux_long", "chomage", "Taux_immo", "EURIBOR", "taux_epargne"), I0_vars = c(), data)
+summary(ECM2$long_term)
 summary(ECM2$ECM)
+reg <- ECM2$ECM
+adf.test(reg$residuals)
+bgtest(reg, 4)
+bptest(reg)
+AIC(reg)
+BIC(reg)
 
-ECM3 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "Taux_long", "EURIBOR"), I1_vars = c("lag1_endettement_menage"), I0_vars = c(), data)
+ECM3 <- ECM_compute(y = "endettement_menage", vars = c("Taux_long", "chomage", "Taux_immo", "EURIBOR", "taux_epargne"), I1_vars = c("lag1_endettement_menage", "chomage", "EURIBOR", "taux_epargne"), I0_vars = c(), data)
 summary(ECM3$long_term)
 summary(ECM3$ECM)
 reg <- ECM3$ECM
 adf.test(reg$residuals)
 bgtest(reg, 4)
 bptest(reg)
+AIC(reg)
+BIC(reg)
 
-ECM4 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "EURIBOR", "Taux_long"), I1_vars = c("lag1_endettement_menage"), I0_vars = c("octroi_credit"), data)
+
+ECM4 <- ECM_compute(y = "endettement_menage", vars = c("Taux_long", "chomage", "Taux_immo", "EURIBOR", "taux_epargne"), I1_vars = c("lag1_endettement_menage", "chomage", "EURIBOR", "taux_epargne"), I0_vars = c("octroi_credit"), data)
+summary(ECM4$long_term)
 summary(ECM4$ECM)
 reg <- ECM4$ECM
 adf.test(reg$residuals)
 bgtest(reg, 4)
 bptest(reg)
-
+AIC(reg)
+BIC(reg)
 
 ############################
 
