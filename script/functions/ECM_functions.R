@@ -167,131 +167,92 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
 
 
 
-
-
-ECM_compute <- function(y = "endettement_menage", vars, ct_vars = NULL, data){
+ECM_compute <- function(y = "endettement_menage", vars, ct_vars = NULL, data) {
   
   # -----------------------------
   # Régression long terme
   # -----------------------------
-  
   formula_lt <- as.formula(
     paste0("`", y, "` ~ ", paste(paste0("`", vars, "`"), collapse = " + "))
   )
-  
   reg_lt <- lm(formula_lt, data = data)
   ECT <- residuals(reg_lt)
   
   # -----------------------------
   # Dataset différencié
   # -----------------------------
-  
   data_diff <- data
   
   # différence de Y
   data_diff[[paste0("diff_", y)]] <- c(NA, diff(data[[y]]))
   
   # différences des variables LT
-  for(v in vars){
-    
+  for (v in vars) {
     diff_name <- paste0("diff_", v)
-    
-    if(!(diff_name %in% names(data_diff))){
+    if (!(diff_name %in% names(data_diff))) {
       data_diff[[diff_name]] <- c(NA, diff(data[[v]]))
     }
-    
   }
   
   # différences des variables CT (hors lag)
-  if(!is.null(ct_vars)){
-    
+  if (!is.null(ct_vars)) {
     ct_no_lag <- ct_vars[!grepl("^lag", ct_vars)]
-    
-    for(v in ct_no_lag){
-      
+    for (v in ct_no_lag) {
       diff_name <- paste0("diff_", v)
-      
-      if(!(diff_name %in% names(data_diff))){
+      if (!(diff_name %in% names(data_diff))) {
         data_diff[[diff_name]] <- c(NA, diff(data[[v]]))
       }
-      
     }
-    
   }
   
   # -----------------------------
   # Création des lags
   # -----------------------------
-  
   lag_vars <- NULL
+  max_lag <- 0
   
-  if(!is.null(ct_vars)){
-    
+  if (!is.null(ct_vars)) {
     lag_vars <- ct_vars[grepl("^lag[0-9]+_", ct_vars)]
     
-    for(lv in lag_vars){
-      
+    for (lv in lag_vars) {
       lag_val <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv))
       original_var <- sub("^lag[0-9]+_", "", lv)
-      
       diff_name <- paste0("diff_", original_var)
       
+      # créer la colonne lag
       data_diff[[lv]] <- c(
         rep(NA, lag_val),
         head(data_diff[[diff_name]], -lag_val)
       )
       
-    }
-    
-  }
-  
-  # -----------------------------
-  # Alignement
-  # -----------------------------
-  
-  data_diff <- data_diff[-1, ]
-  data_diff$ECT <- ECT[-1]
-  
-  # -----------------------------
-  # Variables ECM
-  # -----------------------------
-  
-  diff_vars <- paste0("diff_", vars)
-  
-  diff_vars <- paste0("diff_", vars)
-  
-  diff_ct_vars <- NULL
-  if(!is.null(ct_vars)){
-    ct_nolag <- ct_vars[!grepl("^lag", ct_vars)]
-    if(length(ct_nolag) > 0){
-      diff_ct_vars <- paste0("diff_", ct_nolag)
+      max_lag <- max(max_lag, lag_val)
     }
   }
-
-  all_vars <- c(diff_vars, diff_ct_vars, lag_vars)
-  all_vars <- all_vars[!is.na(all_vars)]
-  all_vars <- all_vars[nchar(all_vars) > 0]
+  
+  # -----------------------------
+  # Alignement des données
+  # -----------------------------
+  data_diff <- data_diff[-(1:max_lag), ]
+  data_diff$ECT <- ECT[-(1:max_lag)]
+  
+  # -----------------------------
+  # Variables pour la formule ECM
+  # -----------------------------
+  diff_vars <- paste0("diff_", vars)
+  diff_ct_vars <- if (!is.null(ct_vars)) paste0("diff_", ct_vars[!grepl("^lag", ct_vars)]) else NULL
+  all_vars <- c(diff_vars, diff_ct_vars, lag_vars, "ECT")
   
   # -----------------------------
   # Formule ECM
   # -----------------------------
-  
   formula_ecm <- as.formula(
-    paste0(
-      "diff_", y, " ~ ",
-      paste(all_vars, collapse = " + "),
-      " + lag(ECT,1)"
-    )
+    paste0("diff_", y, " ~ ", paste(all_vars, collapse = " + "))
   )
   
   # -----------------------------
   # Estimation
   # -----------------------------
-  
   reg_ecm <- lm(formula_ecm, data = data_diff)
   
   return(reg_ecm)
 }
-
-
-
