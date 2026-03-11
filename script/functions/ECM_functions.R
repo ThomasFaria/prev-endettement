@@ -49,121 +49,6 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
 }
 
 
-test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) {
-  
-  models_valides <- data.frame()
-  all_vars <- unique(trimws(unlist(strsplit(results$x, ","))))
-  
-  for (i in 1:nrow(results)) {
-    
-    vars_raw <- as.character(results$x[i])
-    vars_raw <- trimws(vars_raw)
-    
-    vars <- trimws(unlist(strsplit(vars_raw, ",")))
-    
-    if (length(vars) == 0 || all(vars == "")) {
-      warning(paste("La ligne", i, "n’a pas de variables valides, elle est ignorée"))
-      next
-    }
-    
-    # -----------------------------
-    # Modèle long terme
-    # -----------------------------
-    
-    formula_lt <- as.formula(
-      paste0("`", y, "` ~ ", paste(paste0("`", vars, "`"), collapse = " + "))
-    )
-    
-    reg_lt <- lm(formula_lt, data = data)
-    
-    ECT <- residuals(reg_lt)
-    
-    # -----------------------------
-    # différences
-    # -----------------------------
-    
-    data_diff <- data
-    
-    for (v in vars) {
-      data_diff[[paste0("diff_", v)]] <- c(NA, diff(data_diff[[v]]))
-    }
-    
-    data_diff[[paste0("diff_", y)]] <- c(NA, diff(data_diff[[y]]))
-    
-    data_diff <- data_diff[-1, ]
-    data_diff$ECT <- ECT[-1]
-    
-    # -----------------------------
-    # ECM
-    # -----------------------------
-    
-    formula_ecm <- as.formula(
-      paste0(
-        "`diff_", y, "` ~ ",
-        paste0("diff_", vars, collapse = " + "),
-        " + lag(ECT,1)"
-      )
-    )
-    
-    reg_ecm <- lm(formula_ecm, data = data_diff)
-    
-    # Filtre ECT
-    
-    lambda_ECT <- coef(reg_ecm)["lag(ECT, 1)"]
-    pval_ECT <- summary(reg_ecm)$coefficients["lag(ECT, 1)", "Pr(>|t|)"]
-    
-    if (!is.na(lambda_ECT) && lambda_ECT < 0 && pval_ECT < seuil_pval) {
-      
-      aic <- AIC(reg_ecm)
-      bic <- BIC(reg_ecm)
-      adf <- adf.test(residuals(reg_ecm))
-      bg <- bgtest(reg_ecm, order = 4)
-      bp <- bptest(reg_ecm)
-      
-      
-      ligne <- cbind(
-        results[i, ],
-        lambda_ECT = lambda_ECT,
-        pval_ECT = pval_ECT,
-        AIC = aic,
-        BIC = bic,
-        adf_pvalue_ecm = adf$p.value,
-        bg_pvalue_ecm = bg$p.value,
-        bp_pvalue_ecm = bp$p.value 
-      )
-      
-      # récupérer coef et pvalue
-      
-      for (v in all_vars) {
-        
-        var_name <- paste0("diff_", v)
-        
-        if (var_name %in% rownames(summary(reg_ecm)$coefficients)) {
-          
-          coef_var <- coef(reg_ecm)[var_name]
-          pval_var <- summary(reg_ecm)$coefficients[var_name, "Pr(>|t|)"]
-          
-        } else {
-          
-          coef_var <- NA
-          pval_var <- NA
-          
-        }
-        
-        ligne[[paste0("coef_", v)]] <- coef_var
-        ligne[[paste0("pval_", v)]] <- pval_var
-      }
-      
-      models_valides <- rbind(models_valides, ligne)
-      
-    }
-    
-  }
-  
-  return(models_valides)
-  
-}
-
 ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = NULL, data){ 
   ct_vars <- I1_vars 
   # -----------------------------
@@ -281,3 +166,128 @@ ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars 
   reg_ecm <- lm(formula_ecm, data = data_diff) 
   return(list( long_term = reg_lt, ECM = reg_ecm )) 
 }
+
+
+
+
+######################################
+# ESSAIE D'UNE FONCTION PEU PERTINANTE 
+######################################
+
+test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) {
+  
+  models_valides <- data.frame()
+  all_vars <- unique(trimws(unlist(strsplit(results$x, ","))))
+  
+  for (i in 1:nrow(results)) {
+    
+    vars_raw <- as.character(results$x[i])
+    vars_raw <- trimws(vars_raw)
+    
+    vars <- trimws(unlist(strsplit(vars_raw, ",")))
+    
+    if (length(vars) == 0 || all(vars == "")) {
+      warning(paste("La ligne", i, "n’a pas de variables valides, elle est ignorée"))
+      next
+    }
+    
+    # -----------------------------
+    # Modèle long terme
+    # -----------------------------
+    
+    formula_lt <- as.formula(
+      paste0("`", y, "` ~ ", paste(paste0("`", vars, "`"), collapse = " + "))
+    )
+    
+    reg_lt <- lm(formula_lt, data = data)
+    
+    ECT <- residuals(reg_lt)
+    
+    # -----------------------------
+    # différences
+    # -----------------------------
+    
+    data_diff <- data
+    
+    for (v in vars) {
+      data_diff[[paste0("diff_", v)]] <- c(NA, diff(data_diff[[v]]))
+    }
+    
+    data_diff[[paste0("diff_", y)]] <- c(NA, diff(data_diff[[y]]))
+    
+    data_diff <- data_diff[-1, ]
+    data_diff$ECT <- ECT[-1]
+    
+    # -----------------------------
+    # ECM
+    # -----------------------------
+    
+    formula_ecm <- as.formula(
+      paste0(
+        "`diff_", y, "` ~ ",
+        paste0("diff_", vars, collapse = " + "),
+        " + lag(ECT,1)"
+      )
+    )
+    
+    reg_ecm <- lm(formula_ecm, data = data_diff)
+    
+    # Filtre ECT
+    
+    lambda_ECT <- coef(reg_ecm)["lag(ECT, 1)"]
+    pval_ECT <- summary(reg_ecm)$coefficients["lag(ECT, 1)", "Pr(>|t|)"]
+    
+    if (!is.na(lambda_ECT) && lambda_ECT < 0 && pval_ECT < seuil_pval) {
+      
+      aic <- AIC(reg_ecm)
+      bic <- BIC(reg_ecm)
+      adf <- adf.test(residuals(reg_ecm))
+      bg <- bgtest(reg_ecm, order = 4)
+      bp <- bptest(reg_ecm)
+      
+      
+      ligne <- cbind(
+        results[i, ],
+        lambda_ECT = lambda_ECT,
+        pval_ECT = pval_ECT,
+        AIC = aic,
+        BIC = bic,
+        adf_pvalue_ecm = adf$p.value,
+        bg_pvalue_ecm = bg$p.value,
+        bp_pvalue_ecm = bp$p.value 
+      )
+      
+      # récupérer coef et pvalue
+      
+      for (v in all_vars) {
+        
+        var_name <- paste0("diff_", v)
+        
+        if (var_name %in% rownames(summary(reg_ecm)$coefficients)) {
+          
+          coef_var <- coef(reg_ecm)[var_name]
+          pval_var <- summary(reg_ecm)$coefficients[var_name, "Pr(>|t|)"]
+          
+        } else {
+          
+          coef_var <- NA
+          pval_var <- NA
+          
+        }
+        
+        ligne[[paste0("coef_", v)]] <- coef_var
+        ligne[[paste0("pval_", v)]] <- pval_var
+      }
+      
+      models_valides <- rbind(models_valides, ligne)
+      
+    }
+    
+  }
+  
+  return(models_valides)
+  
+}
+
+
+############################################
