@@ -53,11 +53,34 @@ nrow(results)
 
 
 models_valides <- test_ECM(y = "endettement_menage", data, results, seuil_pval = 0.1)
+models_valides <- models_valides[models_valides$adf_pvalue_ecm <= 0.10, ]
+models_valides <- models_valides[models_valides$bp_pvalue_ecm <= 0.10, ]
+models_valides <- models_valides[models_valides$bg_pvalue_ecm <= 0.10, ]
 nrow(models_valides)
 View(models_valides)
 
 ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), ct_vars = c(), data)
-summary(ECM1)
+summary(ECM1$ECM)
+
+ECM2 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "Taux_long", "EURIBOR"), ct_vars = c(), data)
+summary(ECM2$ECM)
+
+ECM3 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "Taux_long", "EURIBOR"), I1_vars = c("lag1_endettement_menage"), data)
+summary(ECM3$long_term)
+summary(ECM3$ECM)
+reg <- ECM3$ECM
+adf.test(reg$residuals)
+bgtest(reg, 4)
+bptest(reg)
+
+ECM4 <- ECM_compute(y = "endettement_menage", vars = c("epargne2", "EURIBOR", "Taux_long"), ct_vars = c("lag1_endettement_menage", "lag2_Taux_long"), data)
+summary(ECM4$ECM)
+reg <- ECM4$ECM
+adf.test(reg$residuals)
+bgtest(reg, 4)
+bptest(reg)
+
+
 ############################
 
 
@@ -71,6 +94,8 @@ summary(ECM1)
 #adf.test(residuals(reg_long))
 
 ############################
+
+View(data)
 
 #### autre combinaison :### 
 reg_long <- lm(endettement_menage ~ prix_logement + Taux_long + EURIBOR + chomage, data = data)
