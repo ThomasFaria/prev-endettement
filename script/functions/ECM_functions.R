@@ -29,6 +29,7 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
       # Test hétéroscédasticité
       bp <- bptest(reg)
       
+      
       results <- rbind(
         results,
         data.frame(
@@ -41,12 +42,37 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
           bp_pvalue = bp$p.value
         )
       )
+      
+      ligne <- NA
+      
+      # récupérer coef et pvalue
+      
+      for (v in vars) {
+        
+        if (v %in% rownames(summary(reg)$coefficients)) {
+          
+          coef_var <- coef(reg)[v]
+          pval_var <- summary(reg)$coefficients[v, "Pr(>|t|)"]
+          
+        } else {
+          
+          coef_var <- NA
+          pval_var <- NA
+          
+        }
+        
+        ligne[[paste0("coef_", v)]] <- coef_var
+        ligne[[paste0("pval_", v)]] <- pval_var
+      }
+      
+      results <- rbind(results, ligne)
     }
   }
-  
+ 
   results <- results[order(results$adf_pvalue), ]
   return(results)
 }
+
 
 
 ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = NULL, data){ 
