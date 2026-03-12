@@ -8,7 +8,7 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
     
     for (c in combs) {
       
-      data <- subset(data, select = c(y, combs))
+      data <- subset(data, select = c(y, c))
       data <- na.omit(data)
       
       x <- c
