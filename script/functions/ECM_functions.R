@@ -321,3 +321,21 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
 
 
 ############################################
+
+
+Lasso <- function(y = "endettement_menage", vars = I1_vars_menage, data, use_1se = FALSE){
+  
+  data <- subset(data, select = c(vars, y))
+  data <- na.omit(data)
+  x <- as.matrix(data[, vars])
+  y <- data[[y]]
+  
+  lasso_model <- glmnet(x, y, alpha = 1)
+  cv_model <- cv.glmnet(x, y, alpha = 1)
+  
+  lambda_final <- if(use_1se) cv_model$lambda.1se else cv_model$lambda.min
+  final_model <- glmnet(x, y, alpha = 1, lambda = lambda_final)
+  coefs <- as.matrix(coef(final_model))
+  
+  return(list(model = final_model, cv = cv_model,  coefs = coefs))
+}

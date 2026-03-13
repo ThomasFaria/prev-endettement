@@ -12,7 +12,7 @@ source("script/get_data_ECM.R")
 data <- read.csv("cache/data_insee_bdf.csv", stringsAsFactors = FALSE)
 
 data$taux_marge <- data$EBE / data$PIB
-data$taux_epargne <- data$epargne2 / data$RDB
+data$taux_epargne <- data$epargne2 / data$RDB * 100
 data$Pays <- "France"
 data <- data %>% dplyr::select(-epargne, -Taux_snf)
 
@@ -42,12 +42,51 @@ print(I1_vars_menage)
 I1_vars_snf <- I1_vars[!I1_vars %in% c("epargne2","taux_epargne","RDB", "credit_aplusunan", "endettement_snf", "endettement_menage","endettement_agent_nonfinancie_privee", "part_menage","Taux_immo", "Duree_immo", "prix_logement", "year","quarter")]
 print(I1_vars_snf)
 
+############################
+#Versions STAT Lasso
+############################
 
-results  <- test_cointegration(data, y = "endettement_menage", I1_vars_menage )
+lasso <- Lasso(y = "endettement_menage", vars = I1_vars_menage, data, use_1se = TRUE)
+coefs <- lasso$coefs
+print(coefs)
+non_zero_vars <- rownames(coefs)[coefs[,1] != 0]
+non_zero_vars <- setdiff(non_zero_vars, "(Intercept)")  # enlever l'intercept
+
+ECM_lasso1 <- ECM_compute(y = "endettement_menage", vars = non_zero_vars, I1_vars = non_zero_vars, I0_vars = c(), data)
+summary(ECM_lasso1$long_term)
+reglt <- ECM_lasso1$long_term
+summary(ECM_lasso1$ECM)
+reg <- ECM_lasso1$ECM
+adf.test(reg$residuals)
+bgtest(reg, 4)
+bptest(reg)
+AIC(reg)
+BIC(reg)
+
+adf.test(reglt$residuals)
+bgtest(reglt, 4)
+bptest(reglt)
+
+
+ECM_lasso2 <- ECM_compute(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_immo","prix_logement"), I1_vars = c("lag1_endettement_menage", "Taux_long", "EURIBOR"), I0_vars = c(), data)
+summary(ECM_lasso2$long_term)
+reglt <- ECM_lasso2$long_term
+summary(ECM_lasso2$ECM)
+reg <- ECM_lasso2$ECM
+adf.test(reg$residuals)
+bgtest(reg, 4)
+bptest(reg)
+AIC(reg)
+BIC(reg)
+
+adf.test(reglt$residuals)
+
+############################
+
+
+results  <- test_cointegration(data, y = "endettement_menage", I1_vars_menage)
 View(results)
 results <- results[results$adf_pvalue <= 0.10, ]
-results <- results[results$bp_pvalue <= 0.10, ]
-results <- results[results$bg_pvalue <= 0.10, ]
 results <- results[results$coef_Taux_long < 0 | is.na(results$coef_Taux_long), ]
 results <- results[results$coef_EURIBOR < 0 | is.na(results$coef_EURIBOR), ]
 nrow(results)
@@ -59,7 +98,7 @@ nrow(results)
 models_valides <- test_ECM(y = "endettement_menage", data, results, seuil_pval = 0.1)
 models_valides <- models_valides[order(models_valides$BIC), ]
 View(models_valides)
-
+nrow(models_valides)
 
 ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I1_vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I0_vars = c(), data)
 summary(ECM1$long_term)
@@ -73,7 +112,7 @@ BIC(reg)
 
 ECM1BIS <- ECM_compute(y = "endettement_menage", 
                        vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"),
-                       I1_vars = c( "lag1_endettement_menage", "EURIBOR", "chomage"), I0_vars = c(), data)
+                       I1_vars = c( "lag1_endettement_menage", "EURIBOR"), I0_vars = c(), data)
 summary(ECM1BIS$long_term)
 summary(ECM1BIS$ECM)
 reg <- ECM1BIS$ECM
@@ -133,7 +172,8 @@ AIC(reg)
 BIC(reg)
 
 
-############################
+
+
 
 
 
