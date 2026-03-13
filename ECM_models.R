@@ -81,6 +81,9 @@ BIC(reg)
 
 adf.test(reglt$residuals)
 
+
+############################
+#Versions Expert 
 ############################
 
 
