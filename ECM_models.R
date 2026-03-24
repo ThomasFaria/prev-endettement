@@ -58,14 +58,14 @@ reglt <- ECM_lasso1$long_term
 summary(ECM_lasso1$ECM)
 reg <- ECM_lasso1$ECM
 adf.test(reg$residuals)
-bgtest(reg, 4)
-bptest(reg)
+lmtest::bgtest(reg, 4)
+lmtest::bptest(reg)
 AIC(reg)
 BIC(reg)
 
 adf.test(reglt$residuals)
-bgtest(reglt, 4)
-bptest(reglt)
+lmtest::bgtest(reglt, 4)
+lmtest::bptest(reglt)
 
 
 ECM_lasso2 <- ECM_compute(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_immo","prix_logement"), I1_vars = c("lag1_endettement_menage", "Taux_long", "EURIBOR"), I0_vars = c(), data)
@@ -74,12 +74,16 @@ reglt <- ECM_lasso2$long_term
 summary(ECM_lasso2$ECM)
 reg <- ECM_lasso2$ECM
 adf.test(reg$residuals)
-bgtest(reg, 4)
-bptest(reg)
+lmtest::bgtest(reg, 4)
+lmtest::bptest(reg)
 AIC(reg)
 BIC(reg)
 
 adf.test(reglt$residuals)
+
+
+
+
 
 
 ############################
@@ -216,6 +220,6 @@ summary(ecm_model)
 ####Taux_long (-) et EURIBOR (-) → hausse des taux → endettement freiné (effet classique du coût du crédit).
 ####ECM_term (-) → l’endettement revient vers l’équilibre de long terme après un choc.
 
- 
+
 
 
