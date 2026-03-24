@@ -216,6 +216,6 @@ summary(ecm_model)
 ####Taux_long (-) et EURIBOR (-) → hausse des taux → endettement freiné (effet classique du coût du crédit).
 ####ECM_term (-) → l’endettement revient vers l’équilibre de long terme après un choc.
 
-
+ 
 
 
