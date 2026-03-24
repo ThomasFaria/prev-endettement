@@ -339,3 +339,159 @@ Lasso <- function(y = "endettement_menage", vars = I1_vars_menage, data, use_1se
   
   return(list(model = final_model, cv = cv_model,  coefs = coefs))
 }
+
+
+
+########################
+#TEST Fonction ECM 
+#######################
+
+ECM_expanding_test_plot <- function(y,
+                                    vars,
+                                    I1_vars = NULL,
+                                    I0_vars = NULL,
+                                    train_size = 60,
+                                    test_size  = 8,
+                                    step = 4,
+                                    data) {
+  
+  I1_varsB <- unique(unlist(sapply(I1_vars, clean_name)))
+  I0_varsB <- unique(unlist(sapply(I0_vars, clean_name)))
+  All <- unique(c(time, y, vars, I1_varsB, I0_varsB))
+  data <- subset(data, select = All)
+  data <- na.omit(data)
+  n <- nrow(data)
+  
+  df_orig <- data.frame(
+    time  = data$time,
+    value = data[[y]]
+  )
+  
+  pred_list <- list()
+  
+  for (end_train in seq(train_size, n - test_size, by = step)) {
+    
+    train <- data[1:end_train, ]
+    test  <- data[(end_train + 1):(end_train + test_size), ]
+    
+    # --- Estimation ECM ---
+    model <- tryCatch({
+      ECM_compute(y = y, vars = vars,
+                  I1_vars = I1_vars,
+                  I0_vars = I0_vars,
+                  data = train)
+    }, error = function(e) NULL)
+    
+    if (is.null(model)) next
+    
+    reg_ecm <- model$ECM
+    reg_lt  <- model$long_term
+    
+    # -----------------------------
+    # SIMULATION DYNAMIQUE
+    # -----------------------------
+    
+    y_hat <- numeric(test_size)
+    
+    # dernière valeur observée
+    y_last <- train[[y]][end_train]
+    
+    # copie des données pour mise à jour dynamique
+    sim_data <- rbind(train, test)
+    
+    for (h in 1:test_size) {
+      
+      t <- end_train + h
+      
+      row <- sim_data[t, ]
+      
+      # -------------------------
+      # 1. recalcul ECT dynamique
+      # -------------------------
+      lt_pred <- predict(reg_lt, newdata = row)
+      ect <- y_last - lt_pred
+      
+      # -------------------------
+      # 2. construire variables ECM
+      # -------------------------
+      
+      # diff Y
+      dy_lag <- if (t > 1) {
+        sim_data[[y]][t-1] - sim_data[[y]][t-2]
+      } else NA
+      
+      # dataset temporaire
+      temp <- row
+      
+      # diff variables I(1)
+      if (!is.null(I1_vars)) {
+        for (v in I1_vars) {
+          temp[[paste0("diff_", v)]] <- sim_data[[v]][t] - sim_data[[v]][t-1]
+        }
+      }
+      
+      # ajouter ECT lag
+      temp$ECT <- ect
+      
+      # -------------------------
+      # 3. prédiction Δy
+      # -------------------------
+      dy_hat <- predict(reg_ecm, newdata = temp)
+      
+      # -------------------------
+      # 4. reconstruction niveau
+      # -------------------------
+      y_new <- y_last + dy_hat
+      
+      y_hat[h] <- y_new
+      
+      # update dynamique
+      sim_data[[y]][t] <- y_new
+      y_last <- y_new
+    }
+    
+    # -----------------------------
+    # Série complète
+    # -----------------------------
+    time_pred <- data$time[1:(end_train + test_size)]
+    mean_pred <- c(train[[y]], y_hat)
+    
+    pred_list[[length(pred_list) + 1]] <- data.frame(
+      time  = time_pred,
+      mean  = mean_pred,
+      window = paste0("Train jusqu'à ", format(data$time[end_train], "%Y"))
+    )
+  }
+  
+  pred_all <- do.call(rbind, pred_list)
+  pred_all$time <- as.Date(pred_all$time)
+  
+  # -----------------------------
+  # Plot
+  # -----------------------------
+  ggplot() +
+    geom_line(
+      data = pred_all,
+      aes(x = time, y = mean, color = window, group = window),
+      linewidth = 1
+    ) +
+    geom_line(
+      data = df_orig,
+      aes(x = time, y = value),
+      color = "black",
+      linewidth = 1
+    ) +
+    theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      legend.title = element_blank()
+    ) +
+    labs(
+      title = paste("ECM expanding window – test =", test_size),
+      x = "Date",
+      y = y
+    )
+}
+
+
+

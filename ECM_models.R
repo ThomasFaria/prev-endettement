@@ -82,7 +82,15 @@ BIC(reg)
 adf.test(reglt$residuals)
 
 
+###################
+# ESSAI Rowling 
+###################
 
+ECM_expanding_test_plot(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_immo","prix_logement"), 
+                        I1_vars = c("lag1_endettement_menage", "Taux_long", "EURIBOR"), I0_vars = c(),
+                        train_size = 60,
+                        test_size  = 8,
+                        step = 4, data)
 
 
 
