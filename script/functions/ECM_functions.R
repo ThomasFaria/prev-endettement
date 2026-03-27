@@ -273,8 +273,8 @@ test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) 
       aic <- AIC(reg_ecm)
       bic <- BIC(reg_ecm)
       adf <- adf.test(residuals(reg_ecm))
-      bg <- bgtest(reg_ecm, order = 4)
-      bp <- bptest(reg_ecm)
+      bg <- lmtest::bgtest(reg_ecm, order = 4)
+      bp <- lmtest::bptest(reg_ecm)
       
       
       ligne <- cbind(
