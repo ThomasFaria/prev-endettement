@@ -42,6 +42,7 @@ print(I1_vars_menage)
 I1_vars_snf <- I1_vars[!I1_vars %in% c("epargne2","taux_epargne","RDB", "credit_aplusunan", "endettement_snf", "endettement_menage","endettement_agent_nonfinancie_privee", "part_menage","Taux_immo", "Duree_immo", "prix_logement", "year","quarter")]
 print(I1_vars_snf)
 
+
 ############################
 #Versions STAT Lasso
 ############################
@@ -82,17 +83,6 @@ BIC(reg)
 adf.test(reglt$residuals)
 
 
-###################
-# ESSAI Rowling 
-###################
-
-ECM_expanding_test_plot(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_immo","prix_logement"), 
-                        I1_vars = c("lag1_endettement_menage", "Taux_long", "EURIBOR"), I0_vars = c(),
-                        train_size = 60,
-                        test_size  = 8,
-                        step = 4, data)
-
-
 
 ############################
 #Versions Expert 
@@ -113,7 +103,22 @@ nrow(results)
 models_valides <- test_ECM(y = "endettement_menage", data, results, seuil_pval = 0.1)
 models_valides <- models_valides[order(models_valides$BIC), ]
 View(models_valides)
-nrow(models_valides)
+
+
+ECMEXP <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ), I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo"), I0_vars = c("octroi_credit"), data)
+summary(ECMEXP$long_term)
+summary(ECMEXP$ECM)
+reg <- ECMEXP$ECM
+print(I1_vars_menage)
+adf.test(reg$residuals)
+lmtest::bgtest(reg, 4)
+lmtest::bptest(reg)
+AIC(reg)
+BIC(reg)
+
+cor(model.matrix(reg)[, -1])
+
+################################
 
 ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I1_vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I0_vars = c(), data)
 summary(ECM1$long_term)
@@ -181,13 +186,23 @@ summary(ECM3BIS$long_term)
 summary(ECM3BIS$ECM)
 reg <- ECM3BIS$ECM
 adf.test(reg$residuals)
-bgtest(reg, 4)
-bptest(reg)
+lmtest::bgtest(reg, 4)
+lmtest::bptest(reg)
 AIC(reg)
 BIC(reg)
 
 
 
+
+###################
+# ESSAI Rowling 
+###################
+
+ECM_expanding_test_plot(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_immo","prix_logement"), 
+                        I1_vars = c("lag1_endettement_menage", "Taux_long", "EURIBOR"), I0_vars = c(),
+                        train_size = 60,
+                        test_size  = 8,
+                        step = 4, data)
 
 
 
