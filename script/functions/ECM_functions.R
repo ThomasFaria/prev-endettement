@@ -26,10 +26,10 @@ test_cointegration <- function(data, y = "endettement_menage", vars){
       adf <- adf.test(residuals(reg))
       
       # Test autocorrélation
-      bg <- bgtest(reg, order = 4)
+      bg <- lmtest::bgtest(reg, order = 4)
       
       # Test hétéroscédasticité
-      bp <- bptest(reg)
+      bp <- lmtest::bptest(reg)
       
       # Création de la ligne complète
       ligne <- data.frame(
