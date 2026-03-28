@@ -82,27 +82,9 @@ BIC(reg)
 
 adf.test(reglt$residuals)
 
-
-
 ############################
 #Versions Expert 
 ############################
-
-
-results  <- test_cointegration(data, y = "endettement_menage", I1_vars_menage)
-View(results)
-results <- results[results$adf_pvalue <= 0.10, ]
-results <- results[results$coef_Taux_long < 0 | is.na(results$coef_Taux_long), ]
-results <- results[results$coef_EURIBOR < 0 | is.na(results$coef_EURIBOR), ]
-nrow(results)
-#results <- results[results$adf_pvalue <= 0.05, ]
-#results <- results[results$bp_pvalue <= 0.05, ]
-#results <- results[results$bg_pvalue <= 0.05, ]
-nrow(results)
-
-models_valides <- test_ECM(y = "endettement_menage", data, results, seuil_pval = 0.1)
-models_valides <- models_valides[order(models_valides$BIC), ]
-View(models_valides)
 
 
 ECMEXP <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ), I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo"), I0_vars = c("octroi_credit"), data)
@@ -115,12 +97,16 @@ lmtest::bgtest(reg, 4)
 lmtest::bptest(reg)
 AIC(reg)
 BIC(reg)
-
 cor(model.matrix(reg)[, -1])
+
+
+ECM_plot(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ),
+         I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo"),
+         I0_vars = c("octroi_credit"), data, plot_LT = T)
 
 ################################
 
-ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I1_vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I0_vars = c(), data)
+ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I1_vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I0_vars = c(),data)
 summary(ECM1$long_term)
 summary(ECM1$ECM)
 reg <- ECM1$ECM
