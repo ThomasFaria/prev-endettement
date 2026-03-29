@@ -92,7 +92,7 @@ get_webstat_with_country <- function(series_keys, api_key) {
   data$ind_octroi_credit <- ifelse(grepl("Octroi crédit", data$first_part), 1, 0)
   data$ind_demande_credit <- ifelse(grepl("Demande crédit", data$first_part), 1, 0)
   data$ind_credit_aplusunan <- ifelse(grepl("Crédit > 1 an", data$first_part), 1, 0)
-  data$ind_Taux_long <- ifelse(grepl("phare", data$title_fr), 1, 0)
+  data$ind_Taux_long <- ifelse(grepl("Taux de l'emprunt phare à 10 ans", data$title_fr), 1, 0)
   data$ind_Taux_immo <- ifelse(grepl("taux effectifs", data$title_fr), 1, 0)
   data$ind_Duree_immo <- ifelse(grepl("Durée", data$title_fr), 1, 0)
   data$ind_Taux_snf <- ifelse(grepl("Coût de financement des SNF", data$title_fr), 1, 0)

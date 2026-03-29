@@ -1,78 +1,57 @@
+safe_mean <- function(x) {
+  if(all(is.na(x))) return(NA_real_)
+  mean(x, na.rm = TRUE)
+}
 
 get_uni_time_country <- function(data) {
   
   data_transformed <- data %>%
     mutate(
-      endettement_menage    = ifelse(Menages == 1, values, 0),
-      endettement_snf        = ifelse(SNF == 1, values, 0),
-      inflation         = ifelse(Inflation == 1, values, 0),
-      chomage           = ifelse(ind_chomage == 1, values, 0),
-      epargne           = ifelse(ind_epargne == 1, values, 0),
-      octroi_credit     = ifelse(ind_octroi_credit == 1, values, 0),
-      demande_credit    = ifelse(ind_demande_credit == 1, values, 0),
-      octroi_credit_snf     = ifelse(ind_octroi_credit_snf == 1, values, 0),
-      demande_credit_snf   = ifelse(ind_demande_credit_snf == 1, values, 0),
-      credit_aplusunan  = ifelse(ind_credit_aplusunan == 1, values, 0),
-      Taux_long         = ifelse(ind_Taux_long == 1, values, 0),
-      Taux_immo         = ifelse(ind_Taux_immo == 1, values, 0),
-      Duree_immo        = ifelse(ind_Duree_immo == 1, values, 0),
-      Taux_snf          = ifelse(ind_Taux_snf == 1, values, 0),
-      prix_logement     = ifelse(ind_prix_logement == 1, values, 0),
-      salaires          = ifelse(ind_salaires == 1, values, 0),
-      M3                = ifelse(ind_M3 == 1, values, 0), 
-      inflation_anticipée = ifelse(ind_inflation_anticipée == 1, values, 0),
-      EURIBOR = ifelse(ind_EURIBOR == 1, values, 0)
+      endettement_menage    = ifelse(Menages == 1, values, NA),
+      endettement_snf        = ifelse(SNF == 1, values, NA),
+      inflation         = ifelse(Inflation == 1, values, NA),
+      chomage           = ifelse(ind_chomage == 1, values, NA),
+      epargne           = ifelse(ind_epargne == 1, values, NA),
+      octroi_credit     = ifelse(ind_octroi_credit == 1, values, NA),
+      demande_credit    = ifelse(ind_demande_credit == 1, values, NA),
+      octroi_credit_snf     = ifelse(ind_octroi_credit_snf == 1, values, NA),
+      demande_credit_snf   = ifelse(ind_demande_credit_snf == 1, values, NA),
+      credit_aplusunan  = ifelse(ind_credit_aplusunan == 1, values, NA),
+      Taux_long         = ifelse(ind_Taux_long == 1, values, NA),
+      Taux_immo         = ifelse(ind_Taux_immo == 1, values, NA),
+      Duree_immo        = ifelse(ind_Duree_immo == 1, values, NA),
+      Taux_snf          = ifelse(ind_Taux_snf == 1, values, NA),
+      prix_logement     = ifelse(ind_prix_logement == 1, values, NA),
+      salaires          = ifelse(ind_salaires == 1, values, NA),
+      M3                = ifelse(ind_M3 == 1, values, NA), 
+      inflation_anticipée = ifelse(ind_inflation_anticipée == 1, values, NA),
+      EURIBOR = ifelse(ind_EURIBOR == 1, values, NA)
     ) %>%
-    group_by(Pays, time) %>%
-    summarise(
-      endettement_menage = sum(endettement_menage, na.rm = TRUE),
-      endettement_snf     = sum(endettement_snf, na.rm = TRUE),
-      inflation      = sum(inflation, na.rm = TRUE),
-      chomage        = sum(chomage , na.rm = TRUE),
-      epargne        = sum(epargne, na.rm = TRUE),
-      octroi_credit    = sum(octroi_credit, na.rm = TRUE),
-      demande_credit   = sum(demande_credit, na.rm = TRUE),
-      octroi_credit_snf    = sum(octroi_credit_snf, na.rm = TRUE),
-      demande_credit_snf   = sum(demande_credit_snf, na.rm = TRUE),
-      credit_aplusunan = sum(credit_aplusunan, na.rm = TRUE),
-      Taux_long      = sum(Taux_long, na.rm = TRUE),
-      Taux_immo         = sum(Taux_immo, na.rm = TRUE),
-      Duree_immo        = sum(Duree_immo, na.rm = TRUE),
-      Taux_snf          = sum(Taux_snf, na.rm = TRUE),
-      prix_logement     = sum(prix_logement, na.rm = TRUE),
-      salaires          = sum( salaires , na.rm = TRUE),
-      M3                = sum( M3 , na.rm = TRUE),
-      inflation_anticipée = sum(inflation_anticipée, na.rm = TRUE),
-      EURIBOR = sum(EURIBOR, na.rm = TRUE),
-      .groups = "drop"
-    ) %>%
-    
-    # Début de la nouvelle partie pour trimestrialiser
     mutate(
       year    = year(time),
       quarter = quarter(time)
     ) %>%
     group_by(Pays, year, quarter) %>%
     summarise(
-      endettement_menage   = sum(endettement_menage, na.rm = TRUE),
-      endettement_snf       = sum(endettement_snf, na.rm = TRUE),
-      chomage          = sum(chomage, na.rm = TRUE),
-      epargne          = sum(epargne, na.rm = TRUE),
-      octroi_credit    = sum(octroi_credit, na.rm = TRUE),
-      demande_credit   = sum(demande_credit, na.rm = TRUE),
-      octroi_credit_snf    = sum(octroi_credit_snf, na.rm = TRUE),
-      demande_credit_snf   = sum(demande_credit_snf, na.rm = TRUE),
-      credit_aplusunan = mean(credit_aplusunan, na.rm = TRUE),
-      inflation        = mean(inflation, na.rm = TRUE), # moyenne trimestrielle
-      Taux_long        = mean(Taux_long, na.rm = TRUE), # moyenne trimestrielle
-      Taux_immo         = sum(Taux_immo, na.rm = TRUE),
-      Duree_immo        = sum(Duree_immo, na.rm = TRUE),
-      Taux_snf          = mean(Taux_snf, na.rm = TRUE),
-      prix_logement     = sum(prix_logement, na.rm = TRUE),
-      salaires          = sum( salaires , na.rm = TRUE),
-      M3                = mean( M3 , na.rm = TRUE),
-      inflation_anticipée = sum(inflation_anticipée, na.rm = TRUE),
-      EURIBOR = mean(EURIBOR, na.rm = TRUE),
+      endettement_menage   = safe_mean(endettement_menage),
+      endettement_snf       = safe_mean(endettement_snf),
+      chomage          = safe_mean(chomage),
+      epargne          = safe_mean(epargne),
+      octroi_credit    = safe_mean(octroi_credit),
+      demande_credit   = safe_mean(demande_credit),
+      octroi_credit_snf    = safe_mean(octroi_credit_snf),
+      demande_credit_snf   = safe_mean(demande_credit_snf),
+      credit_aplusunan = safe_mean(credit_aplusunan),
+      inflation        = safe_mean(inflation), # moyenne trimestrielle
+      Taux_long        = safe_mean(Taux_long), # moyenne trimestrielle
+      Taux_immo         = safe_mean(Taux_immo),
+      Duree_immo        = safe_mean(Duree_immo),
+      Taux_snf          = safe_mean(Taux_snf),
+      prix_logement     = safe_mean(prix_logement),
+      salaires          = safe_mean( salaires),
+      M3                = safe_mean( M3),
+      inflation_anticipée = safe_mean(inflation_anticipée),
+      EURIBOR = safe_mean(EURIBOR),
       .groups = "drop"
     ) %>%
     mutate(
@@ -85,8 +64,8 @@ get_uni_time_country <- function(data) {
     filter(time >= as.Date("1999-03-31")) %>%
     filter(time <= as.Date("2025-06-30")) %>%
     dplyr::select(Pays, time, endettement_menage, endettement_snf, inflation, endettement_agent_nonfinancie_privee, part_menage, epargne, octroi_credit, demande_credit, credit_aplusunan,  Taux_long, chomage
-                  , Taux_immo, Taux_snf, prix_logement, M3, salaires, inflation_anticipée, Duree_immo, octroi_credit_snf, demande_credit_snf, EURIBOR)
-  
+                  ,Taux_immo, Taux_snf, prix_logement, M3, salaires, inflation_anticipée, Duree_immo, octroi_credit_snf, demande_credit_snf, EURIBOR)
+
   data_transformed <- data_transformed %>%
     mutate(
       epargne = ifelse(epargne == 0, NA, epargne),

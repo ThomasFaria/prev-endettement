@@ -610,6 +610,7 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
   y_ecm <- rep(NA, nrow(data_diff))
   y_ecm[1] <- data_diff[[y]][1]
   
+  
   # reconstruction dynamique
   for(t in 2:nrow(data_diff)){
     y_ecm[t] <- y_ecm[t-1] + data_diff$dy_hat[t]
@@ -628,10 +629,13 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
     y_LT = data$y_LT
   )
   
+  
   plot_data_ecm <- data.frame(
     time = data_diff$time,
     y_ECM = data_diff$y_ECM
   )
+  
+  rmspe <- sqrt(mean(((plot_data$y_true - plot_data$y_LT)/plot_data$y_true)^2, na.rm = TRUE))
   
   # merge
   plot_data <- merge(plot_data, plot_data_ecm, by = "time", all.x = TRUE)
@@ -642,10 +646,17 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
   
   plot_data$time <- as.Date(plot_data$time)
   
- p <-  ggplot(plot_data, aes(x = time)) +
+  p <- ggplot(plot_data, aes(x = time)) +
     geom_line(aes(y = y_true, color = "Observé"), size = 1) +
     geom_line(aes(y = y_LT, color = "Long terme"), linetype = "dotted", size = 1) +
     geom_line(aes(y = y_ECM, color = "ECM dynamique"), linetype = "dashed", size = 1) +
+    scale_color_manual(
+      values = c(
+        "Observé" = "gray30",        # gris foncé
+        "Long terme" = "blue",       # bleu
+        "ECM dynamique" = "red2"     # rouge vif
+      )
+    ) +
     scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
     labs(
       title = paste("Reconstruction du modèle"),
@@ -654,9 +665,8 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
       color = ""
     ) +
     theme_minimal()
- 
- print(p)
   
-  View(plot_data)
+  print(p)
+  print(rmspe)
 }
 

@@ -52,9 +52,10 @@ series <- c(
 )
 
 data <- get_webstat_with_country(series_keys = series, api_key = secrets$api_key)
+a <- subset(data, ind_Taux_long == "1")
 unique(data$title_fr)
-
 data <- get_uni_time_country(data)
+plot(data$time, data$Taux_long, type = "l")
 
 trimestre_par_an_df <- calcul_trimestres_par_an(data, "time")
 print(trimestre_par_an_df)
