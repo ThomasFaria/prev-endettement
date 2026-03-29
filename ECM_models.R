@@ -64,12 +64,8 @@ lmtest::bptest(reg)
 AIC(reg)
 BIC(reg)
 
-adf.test(reglt$residuals)
-lmtest::bgtest(reglt, 4)
-lmtest::bptest(reglt)
 
-
-ECM_lasso2 <- ECM_compute(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_immo","prix_logement"), I1_vars = c("lag1_endettement_menage", "Taux_long", "EURIBOR"), I0_vars = c(), data)
+ECM_lasso2 <- ECM_compute(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_immo","prix_logement"), I1_vars = c("lag1_endettement_menage", "prix_logement", "EURIBOR"), I0_vars = c(), data)
 summary(ECM_lasso2$long_term)
 reglt <- ECM_lasso2$long_term
 summary(ECM_lasso2$ECM)
@@ -81,6 +77,8 @@ AIC(reg)
 BIC(reg)
 
 adf.test(reglt$residuals)
+
+ECM_plot(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_immo","prix_logement"), I1_vars = c("lag1_endettement_menage", "Taux_long", "EURIBOR"), I0_vars = c(), data, plot_LT = T)
 
 ############################
 #Versions Expert 
@@ -99,6 +97,34 @@ AIC(reg)
 BIC(reg)
 cor(model.matrix(reg)[, -1])
 
+data_plot <- data
+data_plot$time <- as.Date(data_plot$time)
+
+p <- ggplot(data_plot, aes(x = time)) +
+  geom_line(aes(y = EURIBOR, color = "EURIBOR"), size = 1) +
+  geom_line(aes(y = Taux_long, color = "Taux long"), size = 1, linetype = "dashed") +
+  geom_line(aes(y = inflation, color = "inflation"), size = 1, linetype = "dashed") +
+  
+  scale_color_manual(
+    values = c(
+      "EURIBOR" = "blue",
+      "Taux long" = "red2",
+      "inflation" = "black"
+    )
+  ) +
+  
+  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+  
+  labs(
+    title = "EURIBOR vs Taux d’intérêt à long terme",
+    y = "Taux (%)",
+    x = "Temps",
+    color = ""
+  ) +
+  
+  theme_minimal()
+
+print(p)
 
 ECM_plot(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ),
          I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo"),
