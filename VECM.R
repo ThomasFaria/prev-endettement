@@ -3,7 +3,7 @@ library(urca)
 library(vars)
 library(dplyr)
 
-# importer data
+# importer data 
 
 file_path <- "cache/data_insee_bdf.csv" 
 
