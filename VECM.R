@@ -111,7 +111,7 @@ summary(vecm_model)
 forecast_horizon <- 4
 
 pred <- predict(vecm_model, n.ahead = forecast_horizon)
-
+ 
 print(pred)
 
 # EXTRACTION VARIABLE PRINCIPALE
