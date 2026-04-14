@@ -5,7 +5,7 @@ library(dplyr)
 
 # importer data
 
-file_path <- "cache/data_insee_bdf.csv"
+file_path <- "cache/data_insee_bdf.csv" 
 
 if (!file.exists(file_path)) {
   stop("Le fichier data_insee_bdf.csv est introuvable dans /cache")
