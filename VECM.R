@@ -1,30 +1,15 @@
+source("ECM_models.R")
 library(tsDyn)
 library(urca)
 library(vars)
 library(dplyr)
 
-# importer data 
-
-file_path <- "cache/data_insee_bdf.csv" 
-
-if (!file.exists(file_path)) {
-  stop("Le fichier data_insee_bdf.csv est introuvable dans /cache")
-}
-
-data <- read.csv(file_path)
-
-# format date
-data$time <- as.Date(data$time)
-
+colnames(data)
 # Variables 
 
 # MENAGES
 vars_menage <- c(
-  "endettement_menage",
-  "inflation",
-  "taux_credit",
-  "revenu_reel",
-  "credit_menage"
+  "endettement_menage","Taux_immo", "salaires", "taux_epargne"
 )
 
 # SNF
@@ -54,11 +39,8 @@ if (length(missing_vars) > 0) {
 }
 
 data_vecm <- data %>%
-  select(all_of(vars_vecm)) %>%
+  dplyr::select(all_of(vars_vecm)) %>%
   na.omit()
-
-# log transformation (standard macro)
-data_vecm <- log(data_vecm)
 
 
 # Sélection du lag (AIC)
@@ -71,13 +53,7 @@ lag_select <- VARselect(
 
 print(lag_select$selection)
 
-lag_opt <- lag_select$selection["AIC(n)"]
-
-if (is.na(lag_opt) || lag_opt < 1) {
-  lag_opt <- 2
-}
-
-cat("\n Lag optimal choisi :", lag_opt, "\n")
+lag_opt <- 2
 
 
 # JOHANSEN COINTEGRATION TEST

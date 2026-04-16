@@ -87,6 +87,9 @@ ECM_plot(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_
 
 ECMEXP <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ), I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo"), I0_vars = c("octroi_credit"), data)
 summary(ECMEXP$long_term)
+reg <- ECMEXP$long_term
+adf.test(reg$residuals)
+
 summary(ECMEXP$ECM)
 reg <- ECMEXP$ECM
 print(I1_vars_menage)
@@ -97,130 +100,51 @@ AIC(reg)
 BIC(reg)
 cor(model.matrix(reg)[, -1])
 
-data_plot <- data
-data_plot$time <- as.Date(data_plot$time)
 
-p <- ggplot(data_plot, aes(x = time)) +
-  geom_line(aes(y = EURIBOR, color = "EURIBOR"), size = 1) +
-  geom_line(aes(y = Taux_long, color = "Taux long"), size = 1, linetype = "dashed") +
-  geom_line(aes(y = inflation, color = "inflation"), size = 1, linetype = "dashed") +
-  
-  scale_color_manual(
-    values = c(
-      "EURIBOR" = "blue",
-      "Taux long" = "red2",
-      "inflation" = "black"
-    )
-  ) +
-  
-  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
-  
-  labs(
-    title = "EURIBOR vs Taux d’intérêt à long terme",
-    y = "Taux (%)",
-    x = "Temps",
-    color = ""
-  ) +
-  
-  theme_minimal()
-
-print(p)
 
 ECM_plot(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ),
          I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo"),
          I0_vars = c("octroi_credit"), data, plot_LT = T)
 
-################################
 
-ECM1 <- ECM_compute(y = "endettement_menage", vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I1_vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"), I0_vars = c(),data)
-summary(ECM1$long_term)
-summary(ECM1$ECM)
-reg <- ECM1$ECM
+############################
+
+
+############################
+#Versions Expert 
+############################
+
+
+ECMEXP <- ECM_compute(y = "endettement_menage", vars = c("Taux_long", "salaires", "taux_epargne" ), I1_vars = c("lag1_endettement_menage", "PIB"), I0_vars = c(), data)
+summary(ECMEXP$long_term)
+reg <- ECMEXP$long_term
 adf.test(reg$residuals)
-bgtest(reg, 4)
-bptest(reg)
-AIC(reg)
-BIC(reg)
 
-ECM1BIS <- ECM_compute(y = "endettement_menage", 
-                       vars = c("prix_logement", "Taux_long", "EURIBOR", "chomage"),
-                       I1_vars = c( "lag1_endettement_menage", "EURIBOR"), I0_vars = c(), data)
-summary(ECM1BIS$long_term)
-summary(ECM1BIS$ECM)
-reg <- ECM1BIS$ECM
-adf.test(reg$residuals)
-bgtest(reg, 4)
-bptest(reg)
-AIC(reg)
-BIC(reg)
-
-ECM2 <- ECM_compute(y = "endettement_menage", vars = c("Taux_long", "chomage", "EURIBOR", "taux_epargne"), 
-                    I1_vars = c("Taux_long", "chomage", "EURIBOR", "taux_epargne"), 
-                    I0_vars = c(), data)
-summary(ECM2$long_term)
-summary(ECM2$ECM)
-reg <- ECM2$ECM
-adf.test(reg$residuals)
-bgtest(reg, 4)
-bptest(reg)
-AIC(reg)
-BIC(reg)
-
-ECM2BIS <- ECM_compute(y = "endettement_menage", vars = c("Taux_long", "chomage", "EURIBOR", "taux_epargne"), 
-                    I1_vars = c("lag1_endettement_menage", "EURIBOR", "taux_epargne"),
-                    I0_vars = c(), data)
-summary(ECM2BIS$long_term)
-summary(ECM2BIS$ECM)
-reg <- ECM2BIS$ECM
-adf.test(reg$residuals)
-bgtest(reg, 4)
-bptest(reg)
-AIC(reg)
-BIC(reg)
-
-
-ECM3 <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "EURIBOR", "taux_epargne"), 
-                    I1_vars = c("Taux_immo", "salaires", "EURIBOR", "taux_epargne"),
-                    I0_vars = c(), data)
-summary(ECM3$long_term)
-summary(ECM3$ECM)
-reg <- ECM3$ECM
-adf.test(reg$residuals)
-bgtest(reg, 4)
-bptest(reg)
-AIC(reg)
-BIC(reg)
-
-ECM3BIS <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "EURIBOR", "taux_epargne"), 
-                    I1_vars = c("lag1_endettement_menage", "EURIBOR", "taux_epargne"),
-                    I0_vars = c(), data)
-summary(ECM3BIS$long_term)
-summary(ECM3BIS$ECM)
-reg <- ECM3BIS$ECM
+summary(ECMEXP$ECM)
+reg <- ECMEXP$ECM
+print(I1_vars_menage)
 adf.test(reg$residuals)
 lmtest::bgtest(reg, 4)
 lmtest::bptest(reg)
 AIC(reg)
 BIC(reg)
+cor(model.matrix(reg)[, -1])
 
 
 
+ECM_plot(y = "endettement_menage", vars = c("Taux_long", "salaires", "taux_epargne" ),
+         I1_vars = c("lag1_endettement_menage", "PIB"),
+         I0_vars = c("octroi_credit"), data, plot_LT = T)
 
-###################
-# ESSAI Rowling 
-###################
 
-ECM_expanding_test_plot(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_immo","prix_logement"), 
-                        I1_vars = c("lag1_endettement_menage", "Taux_long", "EURIBOR"), I0_vars = c(),
-                        train_size = 60,
-                        test_size  = 8,
-                        step = 4, data)
+
 
 
 
 
 
 ############################
+
 
 ### combinaison suivante ne fonctionne pas###
 #reg_long <- lm(endettement_menage ~ PIB + RDB + FBCF, data = data)
