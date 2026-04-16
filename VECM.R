@@ -53,7 +53,7 @@ lag_select <- VARselect(
 
 print(lag_select$selection)
 
-lag_opt <- 2
+lag_opt <- lag_select$selection["AIC(n)"]
 
 
 # JOHANSEN COINTEGRATION TEST
