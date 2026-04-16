@@ -44,43 +44,6 @@ print(I1_vars_snf)
 
 
 ############################
-#Versions STAT Lasso
-############################
-
-lasso <- Lasso(y = "endettement_menage", vars = I1_vars_menage, data, use_1se = TRUE)
-coefs <- lasso$coefs
-print(coefs)
-non_zero_vars <- rownames(coefs)[coefs[,1] != 0]
-non_zero_vars <- setdiff(non_zero_vars, "(Intercept)")  # enlever l'intercept
-
-ECM_lasso1 <- ECM_compute(y = "endettement_menage", vars = non_zero_vars, I1_vars = non_zero_vars, I0_vars = c(), data)
-summary(ECM_lasso1$long_term)
-reglt <- ECM_lasso1$long_term
-summary(ECM_lasso1$ECM)
-reg <- ECM_lasso1$ECM
-adf.test(reg$residuals)
-lmtest::bgtest(reg, 4)
-lmtest::bptest(reg)
-AIC(reg)
-BIC(reg)
-
-
-ECM_lasso2 <- ECM_compute(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_immo","prix_logement"), I1_vars = c("lag1_endettement_menage", "prix_logement", "EURIBOR"), I0_vars = c(), data)
-summary(ECM_lasso2$long_term)
-reglt <- ECM_lasso2$long_term
-summary(ECM_lasso2$ECM)
-reg <- ECM_lasso2$ECM
-adf.test(reg$residuals)
-lmtest::bgtest(reg, 4)
-lmtest::bptest(reg)
-AIC(reg)
-BIC(reg)
-
-adf.test(reglt$residuals)
-
-ECM_plot(y = "endettement_menage", vars = c("DP", "Taux_long", "EURIBOR","Duree_immo","prix_logement"), I1_vars = c("lag1_endettement_menage", "Taux_long", "EURIBOR"), I0_vars = c(), data, plot_LT = T)
-
-############################
 #Versions Expert 
 ############################
 
@@ -100,29 +63,21 @@ AIC(reg)
 BIC(reg)
 cor(model.matrix(reg)[, -1])
 
-
-
 ECM_plot(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ),
          I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo"),
          I0_vars = c("octroi_credit"), data, plot_LT = T)
+print(I1_vars_menage)
 
+#######################
 
-############################
-
-
-############################
-#Versions Expert 
-############################
-
-
-ECMEXP <- ECM_compute(y = "endettement_menage", vars = c("Taux_long", "salaires", "taux_epargne" ), I1_vars = c("lag1_endettement_menage", "PIB"), I0_vars = c(), data)
+ECMEXP <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ), I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo","EURIBOR"), I0_vars = c(), data)
 summary(ECMEXP$long_term)
 reg <- ECMEXP$long_term
 adf.test(reg$residuals)
 
 summary(ECMEXP$ECM)
 reg <- ECMEXP$ECM
-print(I1_vars_menage)
+
 adf.test(reg$residuals)
 lmtest::bgtest(reg, 4)
 lmtest::bptest(reg)
@@ -130,55 +85,59 @@ AIC(reg)
 BIC(reg)
 cor(model.matrix(reg)[, -1])
 
-
-
-ECM_plot(y = "endettement_menage", vars = c("Taux_long", "salaires", "taux_epargne" ),
-         I1_vars = c("lag1_endettement_menage", "PIB"),
-         I0_vars = c("octroi_credit"), data, plot_LT = T)
-
+ECM_plot(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ),
+         I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo","EURIBOR"),
+         I0_vars = c(), data, plot_LT = T)
 
 
 
+data$spreads = data$Taux_immo - data$Taux_long
+data$time <- as.Date(data$time)
 
+data_f <- data[data$time >= as.Date("2006-01-01"), ]
 
+plot(data_f$time, data_f$spreads - mean(data_f$spreads), 
+     type = "l", 
+     col = "steelblue",
+     lwd = 2,
+     main = "Spread : Taux immobilier - Taux long terme",
+     xlab = "Date",
+     ylab = "Spread (en points)")
 
+grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
+abline(h = 0, col = "red", lty = 2, lwd = 1.5)
 
-############################
+adf.test(na.omit(data$spreads))
+kpss.test(na.omit(data$spreads))
 
+ma_2ans <- rollmean(data_f$spreads, k = 8, fill = NA, align = "center")
+data_f$spreads_centered <- data_f$spreads - ma_2ans
 
-### combinaison suivante ne fonctionne pas###
-#reg_long <- lm(endettement_menage ~ PIB + RDB + FBCF, data = data)
-#summary(reg_long)
-#adf.test(residuals(reg_long))
+plot(data_f$time, data_f$spreads_centered, 
+     type = "l", 
+     col = "steelblue",
+     lwd = 2,
+     main = "Spread : Taux immobilier - Taux long terme",
+     xlab = "Date",
+     ylab = "Spread (en points)")
 
-############################
+grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
+abline(h = 0, col = "red", lty = 2, lwd = 1.5)
 
-View(data)
-
-#### autre combinaison :### 
-reg_long <- lm(endettement_menage ~ prix_logement + Taux_long + EURIBOR + chomage, data = data)
-summary(reg_long)
-adf.test(residuals(reg_long))
-## résultat : on trouve p-value de 0.07 donc acceptable et R^2 de 0.94##
-## on teste ECM avec cette combinaison### 
-# calculer le terme de correction
-data$ECM_term <- residuals(reg_long)
-
-# créer les Δvariables pour le court terme
-data$d_endettement <- c(NA, diff(data$endettement_menage))
-data$d_prix_logement <- c(NA, diff(data$prix_logement))
-data$d_Taux_long <- c(NA, diff(data$Taux_long))
-data$d_EURIBOR <- c(NA, diff(data$EURIBOR))
-data$d_chomage <- c(NA, diff(data$chomage))
-
-# ECM : Δendettement dépend des Δvariables + terme de correction lagué
-ecm_model <- lm(d_endettement ~ d_prix_logement + d_Taux_long + d_EURIBOR + d_chomage + lag(ECM_term, 1), data = data)
-summary(ecm_model)
-
-#### Prix logement (+) → si le prix augmente, les ménages s’endettent plus (logique).
-####Taux_long (-) et EURIBOR (-) → hausse des taux → endettement freiné (effet classique du coût du crédit).
-####ECM_term (-) → l’endettement revient vers l’équilibre de long terme après un choc.
+adf.test(data_f$spreads_centered)
+kpss.test(data_f$spreads_centered)
 
 
 
 
+
+plot(data_f$time, data_f$octroi_credit, 
+     type = "l", 
+     col = "steelblue",
+     lwd = 2,
+     main = "Octroi de crédit",
+     xlab = "Date",
+     ylab = "Valeure")
+
+grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
+abline(h = 0, col = "red", lty = 2, lwd = 1.5)
