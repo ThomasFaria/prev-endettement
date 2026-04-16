@@ -107,6 +107,97 @@ plot(data_f$time, data_f$spreads - mean(data_f$spreads),
 grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
 abline(h = 0, col = "red", lty = 2, lwd = 1.5)
 
+adf.test(na.omit(data$spreads- mean(data_f$spreads)))
+kpss.test(na.omit(data$spreads- mean(data_f$spreads)))
+
+check_residuals_2(na.omit(data_f$spreads) - mean(data_f$spreads), lags = 20)
+
+##########################################
+
+
+plot(data_f$time, data_f$octroi_credit, 
+     type = "l", 
+     col = "steelblue",
+     lwd = 2,
+     main = "Octroi de crédit",
+     xlab = "Date",
+     ylab = "Valeure")
+
+grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
+abline(h = 0, col = "red", lty = 2, lwd = 1.5)
+print(I1_vars)
+
+I1_vars_menage <-  I1_vars[!I1_vars %in% c("defaillances", "EBE", "FBCF", "endettement_menage", "endettement_snf","endettement_agent_nonfinancie_privee", "part_menage", "demande_credit_snf", "taux_marge", "year","quarter")]
+print(I1_vars_menage)
+
+I1_vars_snf <- I1_vars[!I1_vars %in% c("epargne2","taux_epargne","RDB", "credit_aplusunan", "endettement_snf", "endettement_menage","endettement_agent_nonfinancie_privee", "part_menage","Taux_immo", "Duree_immo", "prix_logement", "year","quarter")]
+print(I1_vars_snf)
+
+
+############################
+#Versions Expert 
+############################
+
+
+ECMEXP <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ), I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo"), I0_vars = c("octroi_credit"), data)
+summary(ECMEXP$long_term)
+reg <- ECMEXP$long_term
+adf.test(reg$residuals)
+
+summary(ECMEXP$ECM)
+reg <- ECMEXP$ECM
+print(I1_vars_menage)
+adf.test(reg$residuals)
+lmtest::bgtest(reg, 4)
+lmtest::bptest(reg)
+AIC(reg)
+BIC(reg)
+cor(model.matrix(reg)[, -1])
+
+ECM_plot(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ),
+         I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo"),
+         I0_vars = c("octroi_credit"), data, plot_LT = T)
+print(I1_vars_menage)
+
+#######################
+
+ECMEXP <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ), I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo","EURIBOR"), I0_vars = c(), data)
+summary(ECMEXP$long_term)
+reg <- ECMEXP$long_term
+adf.test(reg$residuals)
+
+summary(ECMEXP$ECM)
+reg <- ECMEXP$ECM
+
+adf.test(reg$residuals)
+lmtest::bgtest(reg, 4)
+lmtest::bptest(reg)
+AIC(reg)
+BIC(reg)
+cor(model.matrix(reg)[, -1])
+
+ECM_plot(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ),
+         I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo","EURIBOR"),
+         I0_vars = c(), data, plot_LT = T)
+
+
+
+data$spreads = data$Taux_immo - data$Taux_long
+data$time <- as.Date(data$time)
+
+data_f <- data[data$time >= as.Date("2006-01-01"), ]
+
+plot(data_f$time, data_f$spreads - mean(data_f$spreads), 
+     type = "l", 
+     col = "steelblue",
+     lwd = 2,
+     main = "Spread : Taux immobilier - Taux long terme",
+     xlab = "Date",
+     ylab = "Spread (en points)")
+
+grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
+abline(h = 0, col = "red", lty = 2, lwd = 1.5)
+
 adf.test(na.omit(data$spreads))
 kpss.test(na.omit(data$spreads))
 
