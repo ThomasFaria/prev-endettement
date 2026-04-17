@@ -47,7 +47,7 @@ plot_acf_pacf(country = "France", data, var_name = "endettement_menage_diff",nom
 # AIC et BIC  #
 ###############
 
-summary_table <- test_arima_models_aic_bic(data = data , country = "France", var_name = "endettement_snf_diff", p_max = 3, d = 1, q_max = 3)
+summary_table <- test_arima_models_aic_bic(data = data , country = "France", var_name = "endettement_snf_diff", p_max = 3, d = 1, q_max = 3, xreg = NULL)
 summary_table
 
 latex_code <- print(xtable(summary_table), include.rownames = FALSE)
