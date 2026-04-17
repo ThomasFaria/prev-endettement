@@ -62,15 +62,17 @@ stationarity_tests <- function(data, vars = NULL, countries = NULL) {
 }
 
 
-test_arima_models_aic_bic <- function(data = data, country, var_name = "var", p_max = 3, d = 1, q_max = 3) {
+test_arima_models_aic_bic <- function(data = data, country, var_name = "var", p_max = 3, d = 1, q_max = 3, xreg = NULL) {
   
   data <- data[data$Pays == country, ]
   y <- data[[var_name]]
-  
+  use_xreg <- !is.null(xreg)
   
   grid <- expand.grid(p = 0:p_max, d = d, q = 0:q_max)
   models <- lapply(1:nrow(grid), function(i) as.numeric(grid[i, ]))
   model_names <- sapply(models, function(m) paste0("ARIMA", m[1], m[2], m[3]))
+  
+  if (use_xreg) model_name <- paste0(model_name, " + xreg")
   
   results <- data.frame(
     Model = model_names,
@@ -81,7 +83,15 @@ test_arima_models_aic_bic <- function(data = data, country, var_name = "var", p_
   for (i in 1:length(models)) {
     m <- models[[i]]
     fit <- tryCatch({
-      Arima(y, order = c(m[1], m[2], m[3]))
+      if (use_xreg) {
+        Arima(y,
+              order = c(m[1], m[2], m[3]),
+              xreg = xreg)
+      } else {
+        Arima(y,
+              order = c(m[1], m[2], m[3]))
+      }
+      
     }, error = function(e) {
       message("Modèle ", model_names[i], " n'a pas convergé : ", e$message)
       NULL
