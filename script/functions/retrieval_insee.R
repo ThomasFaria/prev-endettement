@@ -36,6 +36,7 @@ get_insee_advanced <- function(ids){
  data$name <- ifelse(data$series_key == "001656164", "defaillances", data$name)
  data$name <- ifelse(data$series_key == "011794733", "EBE", data$name)
  data$name <- ifelse(data$series_key == "001565530", "climat_affaires", data$name)
+ data$name <- ifelse(data$series_key == "010762015", "salaires2", data$name)
 
  
  data <- data %>%
@@ -63,6 +64,7 @@ get_insee_advanced <- function(ids){
      EBE  = mean(EBE, na.rm = TRUE),
      FBCF = mean(FBCF, na.rm = TRUE),
      defaillances = mean(defaillances, na.rm = TRUE),
+     salaires2 = mean(salaires2, na.rm = TRUE),
      .groups = "drop"
    ) %>%
    mutate(
