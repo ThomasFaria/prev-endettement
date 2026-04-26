@@ -375,9 +375,9 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
   print(rmspe)
 }
 
-data_forecast(data, list_data, c(""), c(""), c("PIB", "FBCF"), 2017.5)
+data_forecast(data, list_data, c("EURIBOR", "Taux_long"), c("chomage"), c("PIB_variation", "FBCF_variation"), 2017.5)
 
-
+  
 data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  year <- floor(date)
  q = date - year
@@ -392,7 +392,31 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  # extraction
  df <- list_data[[sheet_name]]
  n_years <- nrow(df)
- res <- data.frame()
+ 
+ # -------------------------
+ # 1. Construire t_out EN PREMIER
+ # -------------------------
+ t_out <- c()
+ 
+ for (i in 1:n_years) {
+   current_year <- year + i - 1
+   
+   if (i == 1) {
+     if (q == 0) {
+       t_out <- c(t_out, current_year + 1)
+     } else {
+       t_out <- c(t_out, current_year + c(0.5, 0.75, 1))
+     }
+   } else {
+     t_out <- c(t_out, current_year + c(0.25, 0.5, 0.75, 1))
+   }
+ }
+ 
+ # -------------------------
+ # 2. Initialiser res avec la bonne taille
+ # -------------------------
+ res <- data.frame(t = t_out)
+ n_rows <- length(t_out)
   
 
  for (v in vars_cst) {
@@ -477,7 +501,7 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
    
    out <- c()
    
-  v <- sub("_.*", "", v)
+  v_base <- sub("_.*", "", v)
    
    for (i in 1:n_years) {
      
@@ -503,8 +527,8 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
          idx_last <- which.min(abs(data$t - (date - 0.25)))
          idx_ref  <- which.min(abs(data$t - (date - 0.5)))
          
-         last_val <- data[[v]][idx_last]
-         ref_val  <- data[[v]][idx_ref]
+         last_val <- data[[v_base]][idx_last]
+         ref_val  <- data[[v_base]][idx_ref]
          
          Q4 <- ref_val * (1 + taux)
          
@@ -533,37 +557,11 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
    res[[v]] <- out
  }
  
- # -------------------------
- # Construction de l'index t
- # -------------------------
- 
- t_out <- c()
- 
- for (i in 1:n_years) {
-   
-   current_year <- year + i - 1
-   
-   if (i == 1) {
-     
-     if (q == 0) {
-       # seulement Q4
-       t_out <- c(t_out, current_year + 1)
-       
-     } else {
-       # Q2 Q3 Q4
-       t_out <- c(t_out, current_year + c(0.5, 0.75, 1))
-     }
-     
-   } else {
-     # années suivantes complètes
-     t_out <- c(t_out, current_year + c(0.25, 0.5, 0.75, 1))
-   }
- }
- 
- res$t <- t_out
  
  return(res)
 }
+ 
+   
  
   
 ECM_expanding_test_plot <- function(y,
