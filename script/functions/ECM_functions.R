@@ -383,12 +383,12 @@ ECM_expanding_test_plot <- function(y,
                                     test_size  = 2,
                                     step = 1,
                                     data) {
-  
   I1_varsB <- unique(unlist(sapply(I1_vars, clean_name)))
   I0_varsB <- unique(unlist(sapply(I0_vars, clean_name)))
   All <- unique(c(time, y, vars, I1_varsB, I0_varsB))
   data <- subset(data, select = All)
   data <- na.omit(data)
+  
   data$t <- data$year + data$quarter/4
   start = 2015.5
   end <- max(data$t)
@@ -407,22 +407,22 @@ ECM_expanding_test_plot <- function(y,
       paste0(y, " ~ ", paste(vars, collapse = " + "))
     ) 
     
-    reg_lt <- lm(formula_lt, data = data) 
+    reg_lt <- lm(formula_lt, data = train) 
     ECT <- residuals(reg_lt) 
     
     # -----------------------------
     # DATA DIFF
     # -----------------------------
-    data_diff <- data 
+    data_diff <- train
     
-    data_diff[[paste0("diff_", y)]] <- c(NA, diff(data[[y]])) 
+    data_diff[[paste0("diff_", y)]] <- c(NA, diff(train[[y]])) 
     
     if(!is.null(ct_vars)){
       ct_no_lag <- ct_vars[!grepl("^lag", ct_vars)] 
       for(v in ct_no_lag){
         diff_name <- paste0("diff_", v) 
         if(!(diff_name %in% names(data_diff))){
-          data_diff[[diff_name]] <- c(NA, diff(data[[v]])) 
+          data_diff[[diff_name]] <- c(NA, diff(train[[v]])) 
         } 
       } 
     } 
@@ -439,7 +439,7 @@ ECM_expanding_test_plot <- function(y,
         diff_name <- paste0("diff_", original_var) 
         
         if(!(diff_name %in% names(data_diff))){
-          data_diff[[diff_name]] <- c(NA, diff(data[[original_var]])) 
+          data_diff[[diff_name]] <- c(NA, diff(train[[original_var]])) 
         } 
         
         data_diff[[lv]] <- c(
@@ -498,6 +498,12 @@ ECM_expanding_test_plot <- function(y,
     reg_ecm <- lm(formula_ecm, data = data_diff) 
     
     ###############
+    
+    
+    
+    
+    
+    
     data$y_LT <- predict(reg_lt, newdata = data)
     data_diff$dy_hat <- predict(reg_ecm, newdata = data_diff)
     y_ecm <- rep(NA, nrow(data_diff))
@@ -562,8 +568,8 @@ ECM_expanding_test_plot <- function(y,
     print(p)
     print(rmspe)
     
+ }
 }
-
 
 
 ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = NULL, data, plot_LT = TRUE){ 
