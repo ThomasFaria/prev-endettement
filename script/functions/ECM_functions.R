@@ -536,12 +536,12 @@ ECM_expanding_test_plot <- function(y,
   data <- subset(data, select = All)
   data <- na.omit(data)
   data$t <- data$year + data$quarter/4
-  
+  start = 2015.5
+  end <- max(data$t)
+  end <- floor(end*2) /2
   pred_list <- list()
   
-  start <- 
-  
-  for (end_train in seq(start, n - test_size, by = step)) {
+  for (end_train in seq(start, end - test_size, by = step)) {
     
     train <- data[1:end_train, ]
     test  <- data[(end_train + 1):(end_train + test_size), ]
