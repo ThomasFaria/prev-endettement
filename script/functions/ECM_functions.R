@@ -529,11 +529,36 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
    res[[v]] <- out
  }
  
+ # -------------------------
+ # Construction de l'index t
+ # -------------------------
  
+ t_out <- c()
  
+ for (i in 1:n_years) {
+   
+   current_year <- year + i - 1
+   
+   if (i == 1) {
+     
+     if (q == 0) {
+       # seulement Q4
+       t_out <- c(t_out, current_year + 1)
+       
+     } else {
+       # Q2 Q3 Q4
+       t_out <- c(t_out, current_year + c(0.5, 0.75, 1))
+     }
+     
+   } else {
+     # années suivantes complètes
+     t_out <- c(t_out, current_year + c(0.25, 0.5, 0.75, 1))
+   }
+ }
  
+ res$t <- t_out
  
- return(df)
+ return(res)
 }
  
   
