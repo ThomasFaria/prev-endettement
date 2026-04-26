@@ -149,7 +149,7 @@ data$time <- as.Date(data$time)
 
 data_f <- data[data$time >= as.Date("2006-01-01"), ]
 
-salaires3_ma4 <- stats::filter(data_f$salaires3, rep(1/4, 4), sides = 1)
+data_f$salaires3_ma4 <- stats::filter(data_f$salaires3, rep(1/4, 4), sides = 1)
 
 plot(data_f$time, data_f$salaires, 
      type = "l", 
@@ -166,7 +166,7 @@ lines(data_f$time, data_f$salaires3,
       lwd = 2)
 
 # Moyenne mobile (alignée correctement)
-lines(data_f$time, salaires3_ma4, 
+lines(data_f$time, data_f$salaires3_ma4, 
       col = "red", 
       lwd = 2)
 
@@ -180,7 +180,8 @@ legend("bottomleft",
 
 
 x <- data_f$salaires
-y <- data_f$salaires3
+y <- stats::lag(data_f$salaires3_ma4,1)
+
 
 y_rescaled <- (y - mean(y, na.rm=TRUE)) * 
   (sd(x, na.rm=TRUE) / sd(y, na.rm=TRUE)) + 
