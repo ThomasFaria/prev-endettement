@@ -543,8 +543,8 @@ ECM_expanding_test_plot <- function(y,
   
   for (end_train in seq(start, end - test_size, by = step)) {
     
-    train <- data[1:end_train, ]
-    test  <- data[(end_train + 1):(end_train + test_size), ]
+    train <- data[data$t <= end_train, ]
+    test  <- data[data$t > end_train, ]
     
     # --- Estimation ECM ---
     model <- tryCatch({
