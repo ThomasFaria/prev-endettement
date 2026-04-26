@@ -516,7 +516,7 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
          idx_ref <- which.min(abs(data$t - (year - 1)))
          ref_val <- data[[v]][idx_ref]
          
-         Q4 <- ref_val * (1 + taux)
+         Q4 <- ref_val * (1 + (taux/100))
          
          out <- c(out, Q4)
          
@@ -530,7 +530,7 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
          last_val <- data[[v_base]][idx_last]
          ref_val  <- data[[v_base]][idx_ref]
          
-         Q4 <- ref_val * (1 + taux)
+         Q4 <- ref_val * (1 + (taux/100))
          
          # nb de trimestres restants
          n_q <- 3
@@ -546,7 +546,7 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
        # -------------------------
        
        ref_val <- out[length(out)]
-       Q4 <- ref_val * (1 + taux)
+       Q4 <- ref_val * (1 + (taux/100))
        
        path <- seq(ref_val, Q4, length.out = 4)
        
