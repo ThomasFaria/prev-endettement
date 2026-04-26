@@ -376,6 +376,26 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
 }
 
 
+data_forecast <- function(data, vars_cst, vars_inter, date) {
+ year <- floor(date)
+ q = date - year
+ 
+ # nom de la feuille à sélectionner
+ if (q > 0) {
+   sheet_name <- paste0("Prev_j_", year)
+ } else {
+   sheet_name <- paste0("Prev_d_", year - 1)
+ }
+ 
+ # extraction
+ df <- list_data[[sheet_name]]
+ 
+ 
+ 
+ return(df)
+}
+ 
+  
 ECM_expanding_test_plot <- function(y,
                                     vars,
                                     I1_vars = NULL,
@@ -498,9 +518,8 @@ ECM_expanding_test_plot <- function(y,
     reg_ecm <- lm(formula_ecm, data = data_diff) 
     
     ###############
-    
-    
-    
+    #
+    ###############
     
     
     
