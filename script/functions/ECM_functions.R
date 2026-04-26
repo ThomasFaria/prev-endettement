@@ -197,152 +197,6 @@ ECM_compute <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars 
 
 
 
-
-######################################
-# ESSAIE D'UNE FONCTION PEU PERTINANTE 
-######################################
-
-test_ECM <- function(y = "endettement_menage", data, results, seuil_pval = 0.1) {
-  
-  models_valides <- data.frame()
-  all_vars <- unique(trimws(unlist(strsplit(results$x, ","))))
-  
-  data <- subset(data, select = c(all_vars,y)) 
-  data <- na.omit(data)
-  
-  for (i in 1:nrow(results)) {
-    
-    vars_raw <- as.character(results$x[i])
-    vars_raw <- trimws(vars_raw)
-    
-    vars <- trimws(unlist(strsplit(vars_raw, ",")))
-    
-    if (length(vars) == 0 || all(vars == "")) {
-      warning(paste("La ligne", i, "n’a pas de variables valides, elle est ignorée"))
-      next
-    }
-    
-    # -----------------------------
-    # Modèle long terme
-    # -----------------------------
-    
-    formula_lt <- as.formula(
-      paste0("`", y, "` ~ ", paste(paste0("`", vars, "`"), collapse = " + "))
-    )
-    
-    reg_lt <- lm(formula_lt, data = data)
-    
-    ECT <- residuals(reg_lt)
-    
-    # -----------------------------
-    # différences
-    # -----------------------------
-    
-    data_diff <- data
-    
-    for (v in vars) {
-      data_diff[[paste0("diff_", v)]] <- c(NA, diff(data_diff[[v]]))
-    }
-    
-    data_diff[[paste0("diff_", y)]] <- c(NA, diff(data_diff[[y]]))
-    
-    data_diff <- data_diff[-1, ]
-    data_diff$ECT <- ECT[-1]
-    
-    # -----------------------------
-    # ECM
-    # -----------------------------
-    
-    formula_ecm <- as.formula(
-      paste0(
-        "`diff_", y, "` ~ ",
-        paste0("diff_", vars, collapse = " + "),
-        " + lag(ECT,1)"
-      )
-    )
-    
-    reg_ecm <- lm(formula_ecm, data = data_diff)
-    
-    # Filtre ECT
-    
-    lambda_ECT <- coef(reg_ecm)["lag(ECT, 1)"]
-    pval_ECT <- summary(reg_ecm)$coefficients["lag(ECT, 1)", "Pr(>|t|)"]
-    
-    if (!is.na(lambda_ECT) && lambda_ECT < 0 && pval_ECT < seuil_pval) {
-      
-      aic <- AIC(reg_ecm)
-      bic <- BIC(reg_ecm)
-      adf <- adf.test(residuals(reg_ecm))
-      bg <- lmtest::bgtest(reg_ecm, order = 4)
-      bp <- lmtest::bptest(reg_ecm)
-      
-      
-      ligne <- cbind(
-        results[i, ],
-        lambda_ECT = lambda_ECT,
-        pval_ECT = pval_ECT,
-        AIC = aic,
-        BIC = bic,
-        adf_pvalue_ecm = adf$p.value,
-        bg_pvalue_ecm = bg$p.value,
-        bp_pvalue_ecm = bp$p.value 
-      )
-      
-      # récupérer coef et pvalue
-      
-      for (v in all_vars) {
-        
-        var_name <- paste0("diff_", v)
-        
-        if (var_name %in% rownames(summary(reg_ecm)$coefficients)) {
-          
-          coef_var <- coef(reg_ecm)[var_name]
-          pval_var <- summary(reg_ecm)$coefficients[var_name, "Pr(>|t|)"]
-          
-        } else {
-          
-          coef_var <- NA
-          pval_var <- NA
-          
-        }
-        
-        ligne[[paste0("coef_", v, "_ecm")]] <- coef_var
-        ligne[[paste0("pval_", v, "_ecm")]] <- pval_var
-      }
-      
-      models_valides <- rbind(models_valides, ligne)
-      
-    }
-    
-  }
-  
-  return(models_valides)
-  
-}
-
-
-############################################
-
-
-Lasso <- function(y = "endettement_menage", vars = I1_vars_menage, data, use_1se = FALSE){
-  
-  data <- subset(data, select = c(vars, y))
-  data <- na.omit(data)
-  x <- as.matrix(data[, vars])
-  y <- data[[y]]
-  
-  lasso_model <- glmnet(x, y, alpha = 1)
-  cv_model <- cv.glmnet(x, y, alpha = 1)
-  
-  lambda_final <- if(use_1se) cv_model$lambda.1se else cv_model$lambda.min
-  final_model <- glmnet(x, y, alpha = 1, lambda = lambda_final)
-  coefs <- as.matrix(coef(final_model))
-  
-  return(list(model = final_model, cv = cv_model,  coefs = coefs))
-}
-
-
-
 ########################
 #TEST Fonction ECM 
 #######################
@@ -546,123 +400,168 @@ ECM_expanding_test_plot <- function(y,
     train <- data[data$t <= end_train, ]
     test  <- data[data$t > end_train, ]
     
-    # --- Estimation ECM ---
-    model <- tryCatch({
-      ECM_compute(y = y, vars = vars,
-                  I1_vars = I1_vars,
-                  I0_vars = I0_vars,
-                  data = train)
-    }, error = function(e) NULL)
+    # -----------------------------
+    # LONG TERME
+    # -----------------------------
+    formula_lt <- as.formula(
+      paste0(y, " ~ ", paste(vars, collapse = " + "))
+    ) 
     
-    if (is.null(model)) next
-    
-    reg_ecm <- model$ECM
-    reg_lt  <- model$long_term
+    reg_lt <- lm(formula_lt, data = data) 
+    ECT <- residuals(reg_lt) 
     
     # -----------------------------
-    # SIMULATION DYNAMIQUE
+    # DATA DIFF
     # -----------------------------
+    data_diff <- data 
     
-    y_hat <- numeric(test_size)
+    data_diff[[paste0("diff_", y)]] <- c(NA, diff(data[[y]])) 
     
-    # dernière valeur observée
-    y_last <- train[[y]][end_train]
+    if(!is.null(ct_vars)){
+      ct_no_lag <- ct_vars[!grepl("^lag", ct_vars)] 
+      for(v in ct_no_lag){
+        diff_name <- paste0("diff_", v) 
+        if(!(diff_name %in% names(data_diff))){
+          data_diff[[diff_name]] <- c(NA, diff(data[[v]])) 
+        } 
+      } 
+    } 
     
-    # copie des données pour mise à jour dynamique
-    sim_data <- rbind(train, test)
+    # -----------------------------
+    # LAGS I1
+    # -----------------------------
+    lag_vars <- NULL 
+    if(!is.null(ct_vars)){
+      lag_vars <- ct_vars[grepl("^lag[0-9]+_", ct_vars)] 
+      for(lv in lag_vars){
+        lag_val <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv)) 
+        original_var <- sub("^lag[0-9]+_", "", lv) 
+        diff_name <- paste0("diff_", original_var) 
+        
+        if(!(diff_name %in% names(data_diff))){
+          data_diff[[diff_name]] <- c(NA, diff(data[[original_var]])) 
+        } 
+        
+        data_diff[[lv]] <- c(
+          rep(NA, lag_val),
+          head(data_diff[[diff_name]], -lag_val)
+        ) 
+      } 
+    } 
     
-    for (h in 1:test_size) {
-      
-      t <- end_train + h
-      
-      row <- sim_data[t, ]
-      
-      # -------------------------
-      # 1. recalcul ECT dynamique
-      # -------------------------
-      lt_pred <- predict(reg_lt, newdata = row)
-      ect <- y_last - lt_pred
-      
-      # -------------------------
-      # 2. construire variables ECM
-      # -------------------------
-      
-      # diff Y
-      dy_lag <- if (t > 1) {
-        sim_data[[y]][t-1] - sim_data[[y]][t-2]
-      } else NA
-      
-      # dataset temporaire
-      temp <- row
-      
-      # diff variables I(1)
-      if (!is.null(I1_vars)) {
-        for (v in I1_vars) {
-          temp[[paste0("diff_", v)]] <- sim_data[[v]][t] - sim_data[[v]][t-1]
-        }
-      }
-      
-      # ajouter ECT lag
-      temp$ECT <- ect
-      
-      # -------------------------
-      # 3. prédiction Δy
-      # -------------------------
-      dy_hat <- predict(reg_ecm, newdata = temp)
-      
-      # -------------------------
-      # 4. reconstruction niveau
-      # -------------------------
-      y_new <- y_last + dy_hat
-      
-      y_hat[h] <- y_new
-      
-      # update dynamique
-      sim_data[[y]][t] <- y_new
-      y_last <- y_new
+    # -----------------------------
+    # LAGS I0
+    # -----------------------------
+    lag_vars2 <- NULL 
+    if(!is.null(I0_vars)){
+      lag_vars2 <- I0_vars[grepl("^lag[0-9]+_", I0_vars)] 
+      for(lv in lag_vars2){
+        lag_val2 <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv)) 
+        original_var <- sub("^lag[0-9]+_", "", lv) 
+        
+        data_diff[[lv]] <- c(
+          rep(NA, lag_val2),
+          head(data_diff[[original_var]], -lag_val2)
+        ) 
+      } 
     }
     
     # -----------------------------
-    # Série complète
+    # ALIGNEMENT FINAL
     # -----------------------------
-    time_pred <- data$time[1:(end_train + test_size)]
-    mean_pred <- c(train[[y]], y_hat)
+    data_diff <- data_diff[-1, ] 
+    data_diff$ECT <- ECT[-1]
+    data_diff <- na.omit(data_diff)
     
-    pred_list[[length(pred_list) + 1]] <- data.frame(
-      time  = time_pred,
-      mean  = mean_pred,
-      window = paste0("Train jusqu'à ", format(data$time[end_train], "%Y"))
+    # -----------------------------
+    # VARIABLES ECM
+    # -----------------------------
+    diff_ct_vars <- NULL 
+    if(!is.null(ct_vars)){
+      ct_nolag <- ct_vars[!grepl("^lag", ct_vars)] 
+      if(length(ct_nolag) > 0){
+        diff_ct_vars <- paste0("diff_", ct_nolag) 
+      } 
+    } 
+    
+    all_vars <- c(diff_ct_vars, lag_vars, I0_vars, lag_vars2) 
+    all_vars <- all_vars[!is.na(all_vars)] 
+    all_vars <- all_vars[nchar(all_vars) > 0] 
+    
+    # -----------------------------
+    # ECM
+    # -----------------------------
+    formula_ecm <- as.formula(
+      paste0("diff_", y, " ~ ", paste(all_vars, collapse = " + "), " + lag(ECT,1)")
+    ) 
+    
+    reg_ecm <- lm(formula_ecm, data = data_diff) 
+    
+    ###############
+    data$y_LT <- predict(reg_lt, newdata = data)
+    data_diff$dy_hat <- predict(reg_ecm, newdata = data_diff)
+    y_ecm <- rep(NA, nrow(data_diff))
+    y_ecm[1] <- data_diff[[y]][1]
+    
+    
+    # reconstruction dynamique
+    for(t in 2:nrow(data_diff)){
+      y_ecm[t] <- y_ecm[t-1] + data_diff$dy_hat[t]
+    }
+    
+    data_diff$y_ECM <- y_ecm
+    
+    # =========================
+    # ALIGNEMENT TEMPOREL
+    # =========================
+    
+    
+    plot_data <- data.frame(
+      time = data$time,
+      y_true = data[[y]],
+      y_LT = data$y_LT
     )
-  }
-  
-  pred_all <- do.call(rbind, pred_list)
-  pred_all$time <- as.Date(pred_all$time)
-  
-  # -----------------------------
-  # Plot
-  # -----------------------------
-  ggplot() +
-    geom_line(
-      data = pred_all,
-      aes(x = time, y = mean, color = window, group = window),
-      linewidth = 1
-    ) +
-    geom_line(
-      data = df_orig,
-      aes(x = time, y = value),
-      color = "black",
-      linewidth = 1
-    ) +
-    theme_minimal() +
-    theme(
-      legend.position = "bottom",
-      legend.title = element_blank()
-    ) +
-    labs(
-      title = paste("ECM expanding window – test =", test_size),
-      x = "Date",
-      y = y
+    
+    
+    plot_data_ecm <- data.frame(
+      time = data_diff$time,
+      y_ECM = data_diff$y_ECM
     )
+    
+    rmspe <- sqrt(mean(((plot_data$y_true - plot_data$y_LT)/plot_data$y_true)^2, na.rm = TRUE))
+    
+    # merge
+    plot_data <- merge(plot_data, plot_data_ecm, by = "time", all.x = TRUE)
+    
+    # =========================
+    # PLOT GGPLOT
+    # =========================
+    
+    plot_data$time <- as.Date(plot_data$time)
+    
+    p <- ggplot(plot_data, aes(x = time)) +
+      geom_line(aes(y = y_true, color = "Observé"), size = 1) +
+      geom_line(aes(y = y_LT, color = "Long terme"), linetype = "dotted", size = 1) +
+      geom_line(aes(y = y_ECM, color = "ECM dynamique"), linetype = "dashed", size = 1) +
+      scale_color_manual(
+        values = c(
+          "Observé" = "gray30",        # gris foncé
+          "Long terme" = "blue",       # bleu
+          "ECM dynamique" = "red2"     # rouge vif
+        )
+      ) +
+      scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+      labs(
+        title = paste("Reconstruction du modèle"),
+        y = y,
+        x = "Temps",
+        color = ""
+      ) +
+      theme_minimal()
+    
+    print(p)
+    print(rmspe)
+    
 }
 
 
