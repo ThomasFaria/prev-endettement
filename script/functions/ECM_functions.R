@@ -376,12 +376,12 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
 }
 
 
-data_forecast <- function(data, vars_cst, vars_inter, date) {
+data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  year <- floor(date)
  q = date - year
  
  # nom de la feuille à sélectionner
- if (q > 0) {
+ if (q > 0.25) {
    sheet_name <- paste0("Prev_j_", year)
  } else {
    sheet_name <- paste0("Prev_d_", year - 1)
@@ -389,6 +389,147 @@ data_forecast <- function(data, vars_cst, vars_inter, date) {
  
  # extraction
  df <- list_data[[sheet_name]]
+ n_years <- nrow(df)
+ res <- data.frame()
+  
+
+ for (v in vars_cst) {
+   
+   out <- c()
+   
+   for (i in 1:n_years) {
+     
+     val <- df[[v]][i]
+     
+     if (i == 1) {
+       # première année → dépend de q
+       
+       if (q == 0) {
+         # seulement Q4
+         out <- c(out, val)
+         
+       } else {
+         out <- c(out, rep(val, 3))
+       }
+       
+     } else {
+       # années suivantes, 4 trimestres
+       out <- c(out, rep(val, 4))
+     }
+   }
+   res[[v]] <- out
+ }
+ 
+ # -------------------------
+ # Variables interpolées
+ # -------------------------
+
+ for (v in vars_inter) {
+   
+   out <- c()
+   
+   for (i in 1:n_years) {
+     
+     val <- df[[v]][i]   # valeur annuelle (Q4)
+     
+     if (i == 1) {
+       
+       if (q == 0) {
+         # cas début d'année → seulement Q4
+         out <- c(out, val)
+         
+       } else {
+         # dernière valeur observée (t - 0.25)
+         idx <- which.min(abs(data$t - (date - 0.25)))
+         last_val <- data[[v]][idx]
+         
+         # nombre de trimestres à prévoir
+         n_q <- 3
+         
+         # interpolation last_val → val
+         path <- seq(last_val, val, length.out = n_q)
+         
+         out <- c(out, path)
+       }
+       
+     } else {
+       # années suivantes = interpolation complète
+       
+       # point de départ = dernier point déjà construit
+       start_val <- out[length(out)]
+       
+       path <- seq(start_val, val, length.out = 4)
+       
+       out <- c(out, path)
+     }
+   }
+   
+   res[[v]] <- out
+ }
+ 
+ # -------------------------
+ # Taux
+ # -------------------------
+ 
+ for (v in tx_var) {
+   
+   out <- c()
+   
+   for (i in 1:n_years) {
+     
+     taux <- df[[v]][i]   # taux annuel
+     
+     if (i == 1) {
+       
+       if (q == 0) {
+         # -------------------------
+         # début d'année
+         # -------------------------
+         idx_ref <- which.min(abs(data$t - (year - 1)))
+         ref_val <- data[[v]][idx_ref]
+         
+         Q4 <- ref_val * (1 + taux)
+         
+         out <- c(out, Q4)
+         
+       } else {
+         # -------------------------
+         # intra-annuel
+         # -------------------------
+         idx_last <- which.min(abs(data$t - (date - 0.25)))
+         idx_ref  <- which.min(abs(data$t - (date - 0.5)))
+         
+         last_val <- data[[v]][idx_last]
+         ref_val  <- data[[v]][idx_ref]
+         
+         Q4 <- ref_val * (1 + taux)
+         
+         # nb de trimestres restants
+         n_q <- 3
+         
+         path <- seq(last_val, Q4, length.out = n_q)
+         
+         out <- c(out, path)
+       }
+       
+     } else {
+       # -------------------------
+       # années suivantes
+       # -------------------------
+       
+       ref_val <- out[length(out)]
+       Q4 <- ref_val * (1 + taux)
+       
+       path <- seq(ref_val, Q4, length.out = 4)
+       
+       out <- c(out, path)
+     }
+   }
+   
+   res[[v]] <- out
+ }
+ 
+ 
  
  
  
