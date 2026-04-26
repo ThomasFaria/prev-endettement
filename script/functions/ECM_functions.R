@@ -484,7 +484,7 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
        # point de départ = dernier point déjà construit
        start_val <- out[length(out)]
        
-       path <- seq(start_val, val, length.out = 4)
+       path <- seq(start_val, val, length.out = 5)[-1]
        
        out <- c(out, path)
      }
@@ -548,7 +548,7 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
        ref_val <- out[length(out)]
        Q4 <- ref_val * (1 + (taux/100))
        
-       path <- seq(ref_val, Q4, length.out = 4)
+       path <- seq(ref_val, Q4, length.out = 5)[-1] 
        
        out <- c(out, path)
      }
