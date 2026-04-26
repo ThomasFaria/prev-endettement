@@ -676,32 +676,7 @@ check_residuals_2 <- function(res, lags = 20) {
   
   invisible(res)  # renvoie les résidus si besoin
 }
-  for (var in vars) {
-    var_sym <- ensym(var)
-    for (country in unique(data$Pays)) {
-      series <- na.omit(data %>% filter(Pays == country) %>% pull(!!var_sym))
-      
-      if (sum(!is.na(series)) < 5) next
-      
-      adf_result <- adf.test(series, alternative = "stationary")
-      kpss_result <- kpss.test(series, null = "Trend")
-      pp_result <- pp.test(series)
-      
-      results_table <- rbind(
-        results_table,
-        extract_test_results(adf_result, "ADF", var, country),
-        extract_test_results(kpss_result, "KPSS", var, country),
-        extract_test_results(pp_result, "PP", var, country)
-      )
-    }
-  }
-  
-  # Réordonner colonnes
-  results_table <- results_table %>%
-    dplyr::select(Pays, Statistique, P_Value, Stationnarite, Lag)
-  
-  return(results_table)
-}
+
 
 
 test_arima_models_aic_bic <- function(data = data, country, var_name = "var", p_max = 3, d = 1, q_max = 3, xreg = NULL) {
