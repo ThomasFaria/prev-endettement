@@ -375,7 +375,7 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
   print(rmspe)
 }
 
-data_forecast(data, list_data, c("EURIBOR", "Taux_long"), c("chomage"), c("PIB_variation", "FBCF_variation"), 2017.5)
+data_forecast(data, list_data, c("EURIBOR", "Taux_long"), c("chomage"), c("PIB_variation", "FBCF_variation"), 2016.5)
 
   
 data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
@@ -514,7 +514,7 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
          # début d'année
          # -------------------------
          idx_ref <- which.min(abs(data$t - (year - 1)))
-         ref_val <- data[[v]][idx_ref]
+         ref_val <- data[[v_base]][idx_ref]
          
          Q4 <- ref_val * (1 + (taux/100))
          
