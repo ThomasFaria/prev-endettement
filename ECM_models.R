@@ -14,6 +14,7 @@ data$taux_marge <- data$EBE / data$PIB
 data$taux_epargne <- data$epargne2 / data$RDB * 100
 data$Pays <- "France"
 data <- data %>% dplyr::select(-epargne, -Taux_snf)
+data$salaires3 <- ((data$salaires2 - lag(data$salaires2)) / lag(data$salaires2,1)) * 100 + data$inflation
 
 
 ########### Stationarité #############
@@ -148,15 +149,36 @@ data$time <- as.Date(data$time)
 
 data_f <- data[data$time >= as.Date("2006-01-01"), ]
 
+salaires3_ma4 <- stats::filter(data_f$salaires3, rep(1/4, 4), sides = 1)
+
 plot(data_f$time, data_f$salaires, 
      type = "l", 
      col = "steelblue",
      lwd = 2,
-     main = "Spread : Taux immobilier - Taux long terme",
+     main = "Taux de croissance",
      xlab = "Date",
-     ylab = "Spread (en points)")
+     ylab = "Spread (en points)",
+     ylim = range(c(data_f$salaires, data_f$salaires3, salaires3_ma4), na.rm = TRUE))
 
+# Série 2
+lines(data_f$time, data_f$salaires3, 
+      col = "grey", 
+      lwd = 2)
 
+# Moyenne mobile (alignée correctement)
+lines(data_f$time, salaires3_ma4, 
+      col = "red", 
+      lwd = 2)
+
+grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
+abline(h = 0, col = "black", lty = 2, lwd = 1.5)
+
+legend("bottomleft", 
+       legend = c("Salaires négociés", "Salaires réel", "MA(4) salaires réel"),
+       col = c("steelblue", "grey", "red"),
+       lwd = 2)
+
+#########################
 
 plot(data_f$time, data_f$spreads, 
      type = "l", 
