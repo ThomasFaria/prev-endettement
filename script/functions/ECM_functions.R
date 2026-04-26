@@ -375,6 +375,8 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
   print(rmspe)
 }
 
+data_forecast(data, list_data, c(""), c(""), c("PIB", "FBCF"), 2017.5)
+
 
 data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  year <- floor(date)
@@ -471,9 +473,11 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  # Taux
  # -------------------------
  
- for (v in tx_var) {
+ for (v in tx_var) { 
    
    out <- c()
+   
+  v <- sub("_.*", "", v)
    
    for (i in 1:n_years) {
      
