@@ -178,6 +178,40 @@ legend("bottomleft",
        col = c("steelblue", "grey", "red"),
        lwd = 2)
 
+
+x <- data_f$salaires
+y <- data_f$salaires3
+
+y_rescaled <- (y - mean(y, na.rm=TRUE)) * 
+  (sd(x, na.rm=TRUE) / sd(y, na.rm=TRUE)) + 
+  mean(x, na.rm=TRUE)
+
+
+plot(data_f$time, data_f$salaires, 
+     type = "l", 
+     col = "steelblue",
+     lwd = 2,
+     main = "Taux de croissance",
+     xlab = "Date",
+     ylab = "Spread (en points)",
+     ylim = range(c(data_f$salaires, data_f$salaires3, salaires3_ma4), na.rm = TRUE))
+
+
+# Moyenne mobile (alignée correctement)
+lines(data_f$time, y_rescaled, 
+      col = "red", 
+      lwd = 2)
+
+grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
+abline(h = 0, col = "black", lty = 2, lwd = 1.5)
+
+legend("bottomleft", 
+       legend = c("Salaires négociés", "MA(4) salaires réel"),
+       col = c("steelblue", "red"),
+       lwd = 2)
+
+
+
 #########################
 
 plot(data_f$time, data_f$spreads, 
