@@ -375,8 +375,6 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
   print(rmspe)
 }
 
-data_forecast(data, list_data, c("EURIBOR", "Taux_long"), c("chomage"), c("PIB_variation", "FBCF_variation"), 2016.5)
-
   
 data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  year <- floor(date)
@@ -554,15 +552,23 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
      }
    }
    
-   res[[v]] <- out
+   res[[v_base]] <- out
  }
  
  
  return(res)
 }
+
+data_forecast(data, list_data, c("EURIBOR", "Taux_long", "salaires_brut"),
+                         c("chomage", "taux_epargne"), c("PIB_variation", "FBCF_variation")
+                         , 2015.5)
  
-   
- 
+ECM_expanding_test_plot(y = "log_end_snf", vars = c("FBCF", "EURIBOR", "salaires", "chomage"),
+                        I1_vars = c("lag1_log_end_snf", "FBCF"),
+                        I0_vars = c(), test_size  = 2,
+                        step = 1,
+                        data)
+
   
 ECM_expanding_test_plot <- function(y,
                                     vars,
@@ -571,6 +577,9 @@ ECM_expanding_test_plot <- function(y,
                                     test_size  = 2,
                                     step = 1,
                                     data) {
+  data_2 = data
+  ct_vars <- I1_vars
+  time = c("time", "year", "quarter")
   I1_varsB <- unique(unlist(sapply(I1_vars, clean_name)))
   I0_varsB <- unique(unlist(sapply(I0_vars, clean_name)))
   All <- unique(c(time, y, vars, I1_varsB, I0_varsB))
@@ -685,76 +694,81 @@ ECM_expanding_test_plot <- function(y,
     
     reg_ecm <- lm(formula_ecm, data = data_diff) 
     
+    
     ###############
-    #
+    # Forecasting
     ###############
     
+    data_fc <- data_forecast( data_2, list_data, c("EURIBOR", "Taux_long", "salaires_brut"),
+                             c("chomage", "taux_epargne"), c("PIB_variation", "FBCF_variation")
+                             , end_train)
     
+    data_fc <- data_fc %>%
+      rename(salaires = salaires_brut)
     
-    data$y_LT <- predict(reg_lt, newdata = data)
-    data_diff$dy_hat <- predict(reg_ecm, newdata = data_diff)
-    y_ecm <- rep(NA, nrow(data_diff))
-    y_ecm[1] <- data_diff[[y]][1]
+    data_fc$y_LT <- predict(reg_lt, newdata = data_fc)
     
+    last_train <- tail(train, 1)
     
-    # reconstruction dynamique
-    for(t in 2:nrow(data_diff)){
-      y_ecm[t] <- y_ecm[t-1] + data_diff$dy_hat[t]
+    # Différences I1 : utiliser last_train comme point de départ
+    for (v in ct_no_lag) {
+      diff_name <- paste0("diff_", v)
+      vals <- c(last_train[[v]], data_fc[[v]])   # n+1 valeurs
+      data_fc[[diff_name]] <- diff(vals)          # n valeurs → bonne longueur
     }
     
-    data_diff$y_ECM <- y_ecm
+    # Lags des diff I1
+    for (lv in lag_vars) {
+      lag_val      <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv))
+      original_var <- sub("^lag[0-9]+_", "", lv)
+      diff_name    <- paste0("diff_", original_var)
+      data_fc[[lv]] <- c(rep(NA, lag_val), head(data_fc[[diff_name]], -lag_val))
+    }
     
-    # =========================
-    # ALIGNEMENT TEMPOREL
-    # =========================
+    # Lags I0
+    for (lv in lag_vars2) {
+      lag_val2     <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv))
+      original_var <- sub("^lag[0-9]+_", "", lv)
+      data_fc[[lv]] <- c(rep(NA, lag_val2), head(data_fc[[original_var]], -lag_val2))
+    }
     
+    last_ECT <- tail(data_diff$ECT, 1)
     
-    plot_data <- data.frame(
-      time = data$time,
-      y_true = data[[y]],
-      y_LT = data$y_LT
-    )
+    n_fc   <- test_size * 4
+    y_fc   <- rep(NA, n_fc)
+    ECT_fc <- rep(NA, n_fc)
+    data_fc <- data_fc[1:n_fc, ]
+    y_prev   <- tail(train[[y]], 1)
+    ECT_prev <- last_ECT
     
+    x <- paste0("lag1_", y)
+    data_fc[[x]]    <- as.numeric(NA)
+    data_fc$ECT     <- as.numeric(NA)
     
-    plot_data_ecm <- data.frame(
-      time = data_diff$time,
-      y_ECM = data_diff$y_ECM
-    )
+    for (t in 1:n_fc) {
+      
+      data_fc[t, x]     <- y_prev
+      data_fc[t, "ECT"] <- ECT_prev
+      
+      # Prédire diff_y avec les coefs ECM
+      dy_hat <- predict(reg_ecm, newdata = data_fc[t, , drop = FALSE])
+      
+      # Niveau reconstruit
+      y_fc[t]   <- y_prev + dy_hat
+      
+      # Mettre à jour ECT
+      ECT_fc[t] <- y_fc[t] - data_fc$y_LT[t]
+      
+      # Préparer t+1
+      y_prev   <- y_fc[t]
+      ECT_prev <- ECT_fc[t]
+    }
     
-    rmspe <- sqrt(mean(((plot_data$y_true - plot_data$y_LT)/plot_data$y_true)^2, na.rm = TRUE))
-    
-    # merge
-    plot_data <- merge(plot_data, plot_data_ecm, by = "time", all.x = TRUE)
-    
-    # =========================
-    # PLOT GGPLOT
-    # =========================
-    
-    plot_data$time <- as.Date(plot_data$time)
-    
-    p <- ggplot(plot_data, aes(x = time)) +
-      geom_line(aes(y = y_true, color = "Observé"), size = 1) +
-      geom_line(aes(y = y_LT, color = "Long terme"), linetype = "dotted", size = 1) +
-      geom_line(aes(y = y_ECM, color = "ECM dynamique"), linetype = "dashed", size = 1) +
-      scale_color_manual(
-        values = c(
-          "Observé" = "gray30",        # gris foncé
-          "Long terme" = "blue",       # bleu
-          "ECM dynamique" = "red2"     # rouge vif
-        )
-      ) +
-      scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
-      labs(
-        title = paste("Reconstruction du modèle"),
-        y = y,
-        x = "Temps",
-        color = ""
-      ) +
-      theme_minimal()
-    
-    print(p)
-    print(rmspe)
-    
+    data_fc[[y]]    <- y_fc
+    data_fc$y_LT_fc <- data_fc$y_LT
+    data_fc$ECT     <- ECT_fc
+  
+    return(data_fc)
  }
 }
 
