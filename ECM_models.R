@@ -307,6 +307,24 @@ autoplot(preds) +
   theme_minimal()
 
 
+################################
+# Forecasting 
+################################
+
+
+sheets <- excel_sheets("data/Data_forecasting.xlsx")
+
+list_data <- lapply(sheets, function(s) {
+  read_excel("data/Data_forecasting.xlsx", sheet = s)
+})
+
+names(list_data) <- sheets
+
+
+
+
+
+
 
 
 
