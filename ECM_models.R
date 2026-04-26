@@ -207,7 +207,7 @@ grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
 abline(h = 0, col = "black", lty = 2, lwd = 1.5)
 
 legend("bottomleft", 
-       legend = c("Salaires négociés", "MA(4) salaires réel"),
+       legend = c("Salaires négociés", "MA(4) salaires réel réajusté"),
        col = c("steelblue", "red"),
        lwd = 2)
 
