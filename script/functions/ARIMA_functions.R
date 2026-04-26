@@ -689,7 +689,7 @@ test_arima_models_aic_bic <- function(data = data, country, var_name = "var", p_
   models <- lapply(1:nrow(grid), function(i) as.numeric(grid[i, ]))
   model_names <- sapply(models, function(m) paste0("ARIMA", m[1], m[2], m[3]))
   
-  if (use_xreg) model_name <- paste0(model_name, " + xreg")
+  if (use_xreg) model_names <- paste0(model_names, " + xreg")
   
   results <- data.frame(
     Model = model_names,

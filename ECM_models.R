@@ -129,7 +129,7 @@ AIC(reg)
 BIC(reg)
 cor(model.matrix(reg)[, -1])
 
-coeftest(reg, vcov = vcovHAC(reg))
+lmtest::coeftest(reg, vcov = sandwich::vcovHAC(reg))
 
 
 ECM_plot(y = "log_end_snf", vars = c("FBCF", "EURIBOR", "salaires", "chomage"),
@@ -139,13 +139,24 @@ ECM_plot(y = "log_end_snf", vars = c("FBCF", "EURIBOR", "salaires", "chomage"),
 
 
 ##############################################
-# Taux Immo 
+# Taux Immo et salaires 
 ###############################################
+
 
 data$spreads = data$Taux_immo - data$Taux_long
 data$time <- as.Date(data$time)
 
 data_f <- data[data$time >= as.Date("2006-01-01"), ]
+
+plot(data_f$time, data_f$salaires, 
+     type = "l", 
+     col = "steelblue",
+     lwd = 2,
+     main = "Spread : Taux immobilier - Taux long terme",
+     xlab = "Date",
+     ylab = "Spread (en points)")
+
+
 
 plot(data_f$time, data_f$spreads, 
      type = "l", 
@@ -167,7 +178,7 @@ check_residuals_2(na.omit(data_f$spreads) - mean(data_f$spreads), lags = 20)
 
 ##########################################
 
-bp <- breakpoints(spreads ~ 1, data = data_f)
+bp <- strucchange::breakpoints(spreads ~ 1, data = data_f)
 summary(bp)
 plot(bp)
 
@@ -237,9 +248,6 @@ autoplot(preds) +
   ggtitle("Prévision du Spread à 18 mois") +
   xlab("Temps") + ylab("Spread") +
   theme_minimal()
-
-
-
 
 
 
