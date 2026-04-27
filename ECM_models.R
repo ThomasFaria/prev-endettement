@@ -9,13 +9,22 @@ source("script/collect_data_webstat&descriptive.R")
 source("script/get_data_ECM.R")
 
 data <- read.csv("cache/data_insee_bdf.csv", stringsAsFactors = FALSE)
+data$t <- data$year + data$quarter/4
+
+sheets <- excel_sheets("data/Data_forecasting.xlsx")
+
+list_data <- lapply(sheets, function(s) {
+  read_excel("data/Data_forecasting.xlsx", sheet = s)
+})
+
+names(list_data) <- sheets
 
 data$taux_marge <- data$EBE / data$PIB
 data$taux_epargne <- data$epargne2 / data$RDB * 100
 data$Pays <- "France"
 data <- data %>% dplyr::select(-epargne, -Taux_snf)
 data$salaires3 <- ((data$salaires2 - lag(data$salaires2)) / lag(data$salaires2,1)) * 100 + data$inflation
-
+data$log_end_snf <- log(data$endettement_snf)
 
 ########### Stationarité #############
 
@@ -307,20 +316,7 @@ autoplot(preds) +
   theme_minimal()
 
 
-################################
-# Forecasting 
-################################
 
-
-sheets <- excel_sheets("data/Data_forecasting.xlsx")
-
-list_data <- lapply(sheets, function(s) {
-  read_excel("data/Data_forecasting.xlsx", sheet = s)
-})
-
-names(list_data) <- sheets
-
-list_data
 
 
 

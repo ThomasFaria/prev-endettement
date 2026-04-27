@@ -375,7 +375,8 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
   print(rmspe)
 }
 
-  
+colnames(data)
+
 data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  year <- floor(date)
  q = date - year
@@ -390,6 +391,7 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  # extraction
  df <- list_data[[sheet_name]]
  n_years <- nrow(df)
+ names(df)[names(df) == "salaires_brut"] <- "salaires"
  
  # -------------------------
  # 1. Construire t_out EN PREMIER
@@ -559,7 +561,9 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  return(res)
 }
 
-data_forecast(data, list_data, c("EURIBOR", "Taux_long", "salaires_brut"),
+
+
+data_forecast(data, list_data, c("EURIBOR", "Taux_long", "salaires"),
                          c("chomage", "taux_epargne"), c("PIB_variation", "FBCF_variation")
                          , 2015.5)
  
@@ -569,7 +573,8 @@ ECM_expanding_test_plot(y = "log_end_snf", vars = c("FBCF", "EURIBOR", "salaires
                         step = 1,
                         data)
 
-  
+
+
 ECM_expanding_test_plot <- function(y,
                                     vars,
                                     I1_vars = NULL,
@@ -577,16 +582,13 @@ ECM_expanding_test_plot <- function(y,
                                     test_size  = 2,
                                     step = 1,
                                     data) {
-  data_2 = data
+  res_list <- list()
   ct_vars <- I1_vars
-  time = c("time", "year", "quarter")
-  I1_varsB <- unique(unlist(sapply(I1_vars, clean_name)))
-  I0_varsB <- unique(unlist(sapply(I0_vars, clean_name)))
-  All <- unique(c(time, y, vars, I1_varsB, I0_varsB))
-  data <- subset(data, select = All)
-  data <- na.omit(data)
   
   data$t <- data$year + data$quarter/4
+  data <- na.omit(data)
+  data_2 <- data 
+  
   start = 2015.5
   end <- max(data$t)
   end <- floor(end*2) /2
@@ -694,30 +696,25 @@ ECM_expanding_test_plot <- function(y,
     
     reg_ecm <- lm(formula_ecm, data = data_diff) 
     
-    
     ###############
     # Forecasting
     ###############
     
-    data_fc <- data_forecast( data_2, list_data, c("EURIBOR", "Taux_long", "salaires_brut"),
-                             c("chomage", "taux_epargne"), c("PIB_variation", "FBCF_variation")
-                             , end_train)
+    data_fc <- data_forecast(data_2, list_data, c("EURIBOR", "Taux_long", "salaires"),
+                             c("chomage", "taux_epargne"), c("PIB_variation", "FBCF_variation"),
+                             end_train)
     
-    data_fc <- data_fc %>%
-      rename(salaires = salaires_brut)
     
     data_fc$y_LT <- predict(reg_lt, newdata = data_fc)
     
     last_train <- tail(train, 1)
     
-    # Différences I1 : utiliser last_train comme point de départ
     for (v in ct_no_lag) {
       diff_name <- paste0("diff_", v)
-      vals <- c(last_train[[v]], data_fc[[v]])   # n+1 valeurs
-      data_fc[[diff_name]] <- diff(vals)          # n valeurs → bonne longueur
+      vals <- c(last_train[[v]], data_fc[[v]])
+      data_fc[[diff_name]] <- diff(vals)
     }
     
-    # Lags des diff I1
     for (lv in lag_vars) {
       lag_val      <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv))
       original_var <- sub("^lag[0-9]+_", "", lv)
@@ -725,7 +722,6 @@ ECM_expanding_test_plot <- function(y,
       data_fc[[lv]] <- c(rep(NA, lag_val), head(data_fc[[diff_name]], -lag_val))
     }
     
-    # Lags I0
     for (lv in lag_vars2) {
       lag_val2     <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv))
       original_var <- sub("^lag[0-9]+_", "", lv)
@@ -734,32 +730,25 @@ ECM_expanding_test_plot <- function(y,
     
     last_ECT <- tail(data_diff$ECT, 1)
     
-    n_fc   <- test_size * 4
-    y_fc   <- rep(NA, n_fc)
-    ECT_fc <- rep(NA, n_fc)
-    data_fc <- data_fc[1:n_fc, ]
+    n_fc     <- test_size * 4
+    y_fc     <- rep(NA, n_fc)
+    ECT_fc   <- rep(NA, n_fc)
+    data_fc  <- data_fc[1:n_fc, ]
     y_prev   <- tail(train[[y]], 1)
     ECT_prev <- last_ECT
     
     x <- paste0("lag1_", y)
-    data_fc[[x]]    <- as.numeric(NA)
-    data_fc$ECT     <- as.numeric(NA)
+    data_fc[[x]]  <- as.numeric(NA)
+    data_fc$ECT   <- as.numeric(NA)
     
     for (t in 1:n_fc) {
-      
       data_fc[t, x]     <- y_prev
       data_fc[t, "ECT"] <- ECT_prev
       
-      # Prédire diff_y avec les coefs ECM
-      dy_hat <- predict(reg_ecm, newdata = data_fc[t, , drop = FALSE])
-      
-      # Niveau reconstruit
+      dy_hat    <- predict(reg_ecm, newdata = data_fc[t, , drop = FALSE])
       y_fc[t]   <- y_prev + dy_hat
-      
-      # Mettre à jour ECT
       ECT_fc[t] <- y_fc[t] - data_fc$y_LT[t]
       
-      # Préparer t+1
       y_prev   <- y_fc[t]
       ECT_prev <- ECT_fc[t]
     }
@@ -767,10 +756,14 @@ ECM_expanding_test_plot <- function(y,
     data_fc[[y]]    <- y_fc
     data_fc$y_LT_fc <- data_fc$y_LT
     data_fc$ECT     <- ECT_fc
-  
-    return(data_fc)
- }
+    
+    res_list[[as.character(end_train)]] <- data_fc
+  }
+  return(res_list)
 }
+
+
+
 
 
 ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = NULL, data, plot_LT = TRUE){ 
