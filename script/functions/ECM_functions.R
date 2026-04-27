@@ -375,7 +375,7 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
   print(rmspe)
 }
 
-colnames(data)
+
 
 data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  year <- floor(date)
@@ -385,7 +385,7 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  if (q > 0.25) {
    sheet_name <- paste0("Prev_j_", year)
  } else {
-   sheet_name <- paste0("Prev_d_", year - 1)
+   sheet_name <- paste0("Prev_d_", year-1)
  }
  
  # extraction
@@ -399,16 +399,31 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  t_out <- c()
  
  for (i in 1:n_years) {
+   
    current_year <- year + i - 1
    
    if (i == 1) {
+     
      if (q == 0) {
-       t_out <- c(t_out, current_year + 1)
+       t_out <- c(t_out, current_year)
+       
      } else {
-       t_out <- c(t_out, current_year + c(0.5, 0.75, 1))
+     
+       nbr_q <- q 
+       
+       t_seq <- seq(q, 1, by = 0.25)
+       
+       t_out <- c(t_out, current_year + t_seq)
      }
+     
    } else {
+     if (q == 0) {
+       t_out <- c(t_out, current_year - 1 + c(0.25, 0.5, 0.75, 1))
+     }
+     else{
+     # années suivantes complètes
      t_out <- c(t_out, current_year + c(0.25, 0.5, 0.75, 1))
+     }
    }
  }
  
@@ -438,7 +453,7 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
          out <- c(out, rep(val, 3))
        }
        
-     } else {
+     } else { 
        # années suivantes, 4 trimestres
        out <- c(out, rep(val, 4))
      }
@@ -466,7 +481,7 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
          
        } else {
          # dernière valeur observée (t - 0.25)
-         idx <- which.min(abs(data$t - (date - 0.25)))
+         idx <- match((date - 0.25), data$t)
          last_val <- data[[v]][idx]
          
          # nombre de trimestres à prévoir
@@ -492,87 +507,60 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
    
    res[[v]] <- out
  }
- 
  # -------------------------
  # Taux
  # -------------------------
  
- for (v in tx_var) { 
+ for (v in tx_var) {
    
    out <- c()
-   
-  v_base <- sub("_.*", "", v)
+   v_base <- sub("_.*", "", v)
    
    for (i in 1:n_years) {
      
-     taux <- df[[v]][i]   # taux annuel
+     taux <- df[[v]][i]   # taux annuel en %
+     facteur_annuel <- 1 + taux / 100
+     taux_trim <- facteur_annuel^(1/4) - 1
      
      if (i == 1) {
        
        if (q == 0) {
          # -------------------------
-         # début d'année
+         # début d'année : 1 trimestre à produire (Q4)
          # -------------------------
-         idx_ref <- which.min(abs(data$t - (year - 1)))
-         ref_val <- data[[v_base]][idx_ref]
+         idx_last <- match((date - 0.25), data$t) # Q3 année précédente
+         last_val <- data[[v_base]][idx_last]
          
-         Q4 <- ref_val * (1 + (taux/100))
-         
-         out <- c(out, Q4)
+         out <- c(out, last_val * (1 + taux_trim))
          
        } else {
          # -------------------------
-         # intra-annuel
+         # intra-annuel : n_remaining trimestres à produire
          # -------------------------
-         idx_last <- which.min(abs(data$t - (date - 0.25)))
-         idx_ref  <- which.min(abs(data$t - (date - 0.5)))
+         n_elapsed   <- round(q / 0.25)
+         n_remaining <- 5 - n_elapsed
          
+         idx_last <- match((date - 0.25), data$t)
          last_val <- data[[v_base]][idx_last]
-         ref_val  <- data[[v_base]][idx_ref]
          
-         Q4 <- ref_val * (1 + (taux/100))
-         
-         # nb de trimestres restants
-         n_q <- 3
-         
-         path <- seq(last_val, Q4, length.out = n_q)
-         
+         path <- last_val * cumprod(rep(1 + taux_trim, n_remaining))
          out <- c(out, path)
        }
        
      } else {
        # -------------------------
-       # années suivantes
+       # années suivantes : 4 trimestres
        # -------------------------
+       last_val <- out[length(out)]
        
-       ref_val <- out[length(out)]
-       Q4 <- ref_val * (1 + (taux/100))
-       
-       path <- seq(ref_val, Q4, length.out = 5)[-1] 
-       
+       path <- last_val * cumprod(rep(1 + taux_trim, 4))
        out <- c(out, path)
      }
    }
-   
    res[[v_base]] <- out
  }
- 
- 
  return(res)
 }
-
-
-
-data_forecast(data, list_data, c("EURIBOR", "Taux_long", "salaires"),
-                         c("chomage", "taux_epargne"), c("PIB_variation", "FBCF_variation")
-                         , 2015.5)
- 
-ECM_expanding_test_plot(y = "log_end_snf", vars = c("FBCF", "EURIBOR", "salaires", "chomage"),
-                        I1_vars = c("lag1_log_end_snf", "FBCF"),
-                        I0_vars = c(), test_size  = 2,
-                        step = 1,
-                        data)
-
 
 
 ECM_expanding_test_plot <- function(y,
@@ -580,6 +568,7 @@ ECM_expanding_test_plot <- function(y,
                                     I1_vars = NULL,
                                     I0_vars = NULL,
                                     test_size  = 2,
+                                    start,
                                     step = 1,
                                     data) {
   res_list <- list()
@@ -589,12 +578,14 @@ ECM_expanding_test_plot <- function(y,
   data <- na.omit(data)
   data_2 <- data 
   
-  start = 2015.5
+  start = max(start, 2015.5)
+  start <- floor(start*2) /2
   end <- max(data$t)
   end <- floor(end*2) /2
   pred_list <- list()
   
   for (end_train in seq(start, end - test_size, by = step)) {
+    
     
     train <- data[data$t <= end_train, ]
     test  <- data[data$t > end_train, ]
@@ -688,26 +679,37 @@ ECM_expanding_test_plot <- function(y,
     all_vars <- all_vars[nchar(all_vars) > 0] 
     
     # -----------------------------
-    # ECM
+    # ECM - estimation
     # -----------------------------
     formula_ecm <- as.formula(
       paste0("diff_", y, " ~ ", paste(all_vars, collapse = " + "), " + lag(ECT,1)")
     ) 
+    reg_ecm <- lm(formula_ecm, data = data_diff)
     
-    reg_ecm <- lm(formula_ecm, data = data_diff) 
+    # -----------------------------
+    # ECM - formule pour prévision
+    # -----------------------------
+    formula_ecm_fc <- as.formula(
+      paste0("diff_", y, " ~ ", paste(all_vars, collapse = " + "), " + ECT")
+    )
+    reg_ecm_fc <- lm(formula_ecm_fc, data = data_diff %>% dplyr::mutate(ECT = lag(ECT, 1)))
     
     ###############
     # Forecasting
     ###############
+    last_train <- tail(train, 2)[1, ]
     
-    data_fc <- data_forecast(data_2, list_data, c("EURIBOR", "Taux_long", "salaires"),
-                             c("chomage", "taux_epargne"), c("PIB_variation", "FBCF_variation"),
+    data_fc <- data_forecast(data_2, list_data, c("EURIBOR", "Taux_long", "salaires", "taux_epargne"),
+                             c("chomage"), c("PIB_variation", "FBCF_variation"),
                              end_train)
+    data_fc  <- as.data.frame(data_fc)
     
+    
+    # Recaler FBCF et PIB
+    #data_fc[["FBCF"]] <- data_fc[["FBCF"]] + (last_train[["FBCF"]] - data_fc[1, "FBCF"])
+    #data_fc[["PIB"]]  <- data_fc[["PIB"]]  + (last_train[["PIB"]]  - data_fc[1, "PIB"])
     
     data_fc$y_LT <- predict(reg_lt, newdata = data_fc)
-    
-    last_train <- tail(train, 1)
     
     for (v in ct_no_lag) {
       diff_name <- paste0("diff_", v)
@@ -728,13 +730,13 @@ ECM_expanding_test_plot <- function(y,
       data_fc[[lv]] <- c(rep(NA, lag_val2), head(data_fc[[original_var]], -lag_val2))
     }
     
-    last_ECT <- tail(data_diff$ECT, 1)
-    
+    last_ECT <- data_diff$ECT[length(data_diff$ECT) - 1]
+    y_prev   <- train[[y]][length(train[[y]]) - 1]
     n_fc     <- test_size * 4
     y_fc     <- rep(NA, n_fc)
     ECT_fc   <- rep(NA, n_fc)
     data_fc  <- data_fc[1:n_fc, ]
-    y_prev   <- tail(train[[y]], 1)
+    rownames(data_fc) <- NULL
     ECT_prev <- last_ECT
     
     x <- paste0("lag1_", y)
@@ -745,7 +747,7 @@ ECM_expanding_test_plot <- function(y,
       data_fc[t, x]     <- y_prev
       data_fc[t, "ECT"] <- ECT_prev
       
-      dy_hat    <- predict(reg_ecm, newdata = data_fc[t, , drop = FALSE])
+      dy_hat    <- predict(reg_ecm_fc, newdata = data_fc[t, , drop = FALSE])
       y_fc[t]   <- y_prev + dy_hat
       ECT_fc[t] <- y_fc[t] - data_fc$y_LT[t]
       
@@ -761,7 +763,6 @@ ECM_expanding_test_plot <- function(y,
   }
   return(res_list)
 }
-
 
 
 

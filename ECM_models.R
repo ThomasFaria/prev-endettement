@@ -318,8 +318,56 @@ autoplot(preds) +
 
 
 
+#######################################
+# TEST
+#######################################
 
 
+res_list <- ECM_expanding_test_plot(
+  y         = "log_end_snf",
+  vars      = c("FBCF", "EURIBOR", "salaires", "chomage"),
+  I1_vars   = c("lag1_log_end_snf", "FBCF"),
+  I0_vars   = c(),
+  test_size = 2.25,
+  start     = 2016,
+  step      = 1,
+  data      = data
+)
+res_list
+
+
+# Extraire tous les res_list en un seul dataframe
+all_fc <- do.call(rbind, lapply(names(res_list), function(n) {
+  df <- res_list[[n]]
+  df$end_train <- n
+  df
+}))
+
+# Plot FBCF
+par(mfrow = c(1, 2))
+
+plot(data$t, data$FBCF, type = "l", col = "gray30", lwd = 2,
+     main = "FBCF", xlab = "t", ylab = "FBCF",
+     xlim = range(c(data$t, all_fc$t)),
+     ylim = range(c(data$FBCF, all_fc$FBCF), na.rm = TRUE))
+
+for (n in names(res_list)) {
+  df <- res_list[[n]]
+  lines(df$t, df$FBCF, col = "steelblue", lwd = 1, lty = 2)
+}
+
+# Plot PIB
+plot(data$t, data$PIB, type = "l", col = "gray30", lwd = 2,
+     main = "PIB", xlab = "t", ylab = "PIB",
+     xlim = range(c(data$t, all_fc$t)),
+     ylim = range(c(data$PIB, all_fc$PIB), na.rm = TRUE))
+
+for (n in names(res_list)) {
+  df <- res_list[[n]]
+  lines(df$t, df$PIB, col = "red", lwd = 1, lty = 2)
+}
+
+par(mfrow = c(1, 1))
 
 
 
