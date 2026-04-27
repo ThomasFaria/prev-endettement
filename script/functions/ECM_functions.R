@@ -697,73 +697,97 @@ ECM_expanding_test_plot <- function(y,
     ###############
     # Forecasting
     ###############
-    last_train <- tail(train, 2)[1, ]
+    last_idx   <- nrow(train)
+    last_train <- train[last_idx, ]
     
-    data_fc <- data_forecast(data_2, list_data, c("EURIBOR", "Taux_long", "salaires", "taux_epargne"),
+    y_prev   <- last_train[[y]]
+    ECT_prev <- ECT[length(ECT)] 
+    
+    data_fc <- data_forecast(data_2, list_data, 
+                             c("EURIBOR", "Taux_long", "salaires", "taux_epargne"),
                              c("chomage"), c("PIB_variation", "FBCF_variation"),
                              end_train)
-    data_fc  <- as.data.frame(data_fc)
     
+    data_fc <- as.data.frame(data_fc)
+    data_fc <- data_fc[data_fc$t > end_train, ] 
     
-    # Recaler FBCF et PIB
-    #data_fc[["FBCF"]] <- data_fc[["FBCF"]] + (last_train[["FBCF"]] - data_fc[1, "FBCF"])
-    #data_fc[["PIB"]]  <- data_fc[["PIB"]]  + (last_train[["PIB"]]  - data_fc[1, "PIB"])
+   
+    n_fc <- test_size * 4
+    if (nrow(data_fc) < n_fc) {
+      stop(paste0("Période demandée trop longue : data_forecast ne fournit que ", 
+                  nrow(data_fc), " périodes alors que n_fc = ", n_fc))
+    } else {
+      data_fc <- data_fc[1:n_fc, ]
+    }
+    
+    rownames(data_fc) <- NULL
     
     data_fc$y_LT <- predict(reg_lt, newdata = data_fc)
-    
+
     for (v in ct_no_lag) {
       diff_name <- paste0("diff_", v)
       vals <- c(last_train[[v]], data_fc[[v]])
       data_fc[[diff_name]] <- diff(vals)
     }
     
+    # --- LAGS I1 (Variables différenciées) ---
     for (lv in lag_vars) {
       lag_val      <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv))
       original_var <- sub("^lag[0-9]+_", "", lv)
       diff_name    <- paste0("diff_", original_var)
-      data_fc[[lv]] <- c(rep(NA, lag_val), head(data_fc[[diff_name]], -lag_val))
+      
+      # On récupère les dernières différences réelles du train
+      # (car diff_name existe dans data_diff)
+      history <- tail(data_diff[[diff_name]], lag_val)
+      all_vals <- c(history, data_fc[[diff_name]])
+      
+      # On décale et on ne garde que les n_fc premières valeurs
+      # head(..., -lag_val) supprime les dernières pour garder la même longueur
+      data_fc[[lv]] <- as.numeric(head(all_vals, n_fc))
     }
-    
+  
     for (lv in lag_vars2) {
       lag_val2     <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv))
       original_var <- sub("^lag[0-9]+_", "", lv)
-      data_fc[[lv]] <- c(rep(NA, lag_val2), head(data_fc[[original_var]], -lag_val2))
+      
+      # On récupère les dernières valeurs réelles du train
+      history <- tail(train[[original_var]], lag_val2)
+      all_vals <- c(history, data_fc[[original_var]])
+      
+      # On décale et on ne garde que les n_fc premières valeurs
+      data_fc[[lv]] <- as.numeric(head(all_vals, n_fc))
     }
     
-    last_ECT <- data_diff$ECT[length(data_diff$ECT) - 1]
-    y_prev   <- train[[y]][length(train[[y]]) - 1]
-    n_fc     <- test_size * 4
-    y_fc     <- rep(NA, n_fc)
-    ECT_fc   <- rep(NA, n_fc)
-    data_fc  <- data_fc[1:n_fc, ]
-    rownames(data_fc) <- NULL
-    ECT_prev <- last_ECT
-    
-    x <- paste0("lag1_", y)
-    data_fc[[x]]  <- as.numeric(NA)
-    data_fc$ECT   <- as.numeric(NA)
+    y_fc   <- rep(NA, n_fc)
+    ECT_fc <- rep(NA, n_fc)
     
     for (t in 1:n_fc) {
-      data_fc[t, x]     <- y_prev
+      # Injection de l'ECT de la période précédente (t-1)
       data_fc[t, "ECT"] <- ECT_prev
       
-      dy_hat    <- predict(reg_ecm_fc, newdata = data_fc[t, , drop = FALSE])
-      y_fc[t]   <- y_prev + dy_hat
-      ECT_fc[t] <- y_fc[t] - data_fc$y_LT[t]
+      # Prédiction de la variation pour la période t
+      dy_hat <- predict(reg_ecm_fc, newdata = data_fc[t, , drop = FALSE])
       
+      # Calcul du niveau pour t
+      y_fc[t] <- y_prev + dy_hat
+      
+      # Calcul du nouvel ECT (pour l'étape t+1)
+      ECT_prev <- y_fc[t] - data_fc$y_LT[t]
+      
+      # Mise à jour pour l'itération suivante
       y_prev   <- y_fc[t]
-      ECT_prev <- ECT_fc[t]
+      ECT_fc[t] <- ECT_prev
     }
     
+    # Stockage final
     data_fc[[y]]    <- y_fc
     data_fc$y_LT_fc <- data_fc$y_LT
     data_fc$ECT     <- ECT_fc
     
     res_list[[as.character(end_train)]] <- data_fc
   }
-  return(res_list)
+ return(res_list)
 }
-
 
 
 

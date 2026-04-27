@@ -322,15 +322,14 @@ autoplot(preds) +
 # TEST
 #######################################
 
-
 res_list <- ECM_expanding_test_plot(
   y         = "log_end_snf",
   vars      = c("FBCF", "EURIBOR", "salaires", "chomage"),
   I1_vars   = c("lag1_log_end_snf", "FBCF"),
   I0_vars   = c(),
-  test_size = 2.25,
-  start     = 2016,
-  step      = 1,
+  test_size = 2,
+  start     = 2015,
+  step      = 0.5,
   data      = data
 )
 res_list
@@ -368,6 +367,93 @@ for (n in names(res_list)) {
 }
 
 par(mfrow = c(1, 1))
+
+
+# Plot PIB
+plot(data$t, data$Taux_long, type = "l", col = "gray30", lwd = 2,
+     main = "Taux long", xlab = "t", ylab = "Taux long",
+     xlim = range(c(data$t, all_fc$t)),
+     ylim = range(c(data$Taux_long, all_fc$Taux_long), na.rm = TRUE))
+
+cols <- rainbow(length(res_list))
+i <- 1
+for (n in names(res_list)) {
+  df <- res_list[[n]]
+  lines(df$t, df$Taux_long, col = cols[i], lwd = 1, lty = 2)
+  i <- i + 1
+}
+
+
+# Plot PIB
+plot(data$t, data$EURIBOR, type = "l", col = "gray30", lwd = 2,
+     main = "EURIBOR", xlab = "t", ylab = "EURIBOR",
+     xlim = range(c(data$t, all_fc$t)),
+     ylim = range(c(data$EURIBOR, all_fc$EURIBOR), na.rm = TRUE))
+
+cols <- rainbow(length(res_list))
+i <- 1
+for (n in names(res_list)) {
+  df <- res_list[[n]]
+  lines(df$t, df$EURIBOR, col = cols[i], lwd = 1, lty = 2)
+  i <- i + 1
+}
+
+par(mfrow = c(1, 1))
+
+
+
+# Plot PIB
+plot(data$t, data$salaires, type = "l", col = "gray30", lwd = 2,
+     main = "salaires", xlab = "t", ylab = "salaires",
+     xlim = range(c(data$t, all_fc$t)),
+     ylim = range(c(data$salaires, all_fc$salaires), na.rm = TRUE))
+
+cols <- rainbow(length(res_list))
+i <- 1
+for (n in names(res_list)) {
+  df <- res_list[[n]]
+  lines(df$t, df$salaires, col = cols[i], lwd = 1, lty = 2)
+  i <- i + 1
+}
+
+par(mfrow = c(1, 1))
+
+
+
+
+plot(data$t, data$chomage, type = "l", col = "gray30", lwd = 2,
+     main = "chomage", xlab = "t", ylab = "chomage",
+     xlim = range(c(data$t, all_fc$t)),
+     ylim = range(c(data$chomage, all_fc$chomage), na.rm = TRUE),
+     xaxt = "n")
+
+x_all <- c(data$t, all_fc$t)
+
+# Ticks tous les 0.5 (sans labels)
+axis(1,
+     at = seq(floor(min(x_all)), ceiling(max(x_all)), by = 0.5),
+     labels = FALSE)
+
+# Labels uniquement pour les années (entiers), en vertical
+years <- seq(floor(min(x_all)), ceiling(max(x_all)), by = 1)
+
+axis(1,
+     at = years,
+     labels = years,
+     las = 2) 
+
+cols <- rainbow(length(res_list))
+i <- 1
+for (n in names(res_list)) {
+  df <- res_list[[n]]
+  lines(df$t, df$chomage, col = cols[i], lwd = 1, lty = 2)
+  i <- i + 1
+}
+
+par(mfrow = c(1, 1))
+
+
+
 
 
 
