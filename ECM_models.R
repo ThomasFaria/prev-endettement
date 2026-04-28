@@ -11,6 +11,7 @@ source("script/get_data_ECM.R")
 data <- read.csv("cache/data_insee_bdf.csv", stringsAsFactors = FALSE)
 data$t <- data$year + data$quarter/4
 
+
 sheets <- excel_sheets("data/Data_forecasting.xlsx")
 
 list_data <- lapply(sheets, function(s) {

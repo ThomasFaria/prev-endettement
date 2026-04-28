@@ -380,6 +380,7 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
 data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
  year <- floor(date)
  q = date - year
+ q = as.numeric(q)
  
  # nom de la feuille à sélectionner
  if (q > 0.25) {
@@ -1046,33 +1047,16 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
 }
 
 
-last_idx   <- nrow(data)
-last_train <- data[last_idx, ]
-
-y_prev     <- last_train[["log_end_snf"]]
-TIME     <- last_train[["t"]]
-
-data_fc <- data_forecast(data, list_data, 
-                         c("EURIBOR", "Taux_long", "salaires", "taux_epargne"),
-                         c("chomage"), c("PIB_variation", "FBCF_variation"),
-                         TIME)
-data_fc <- data_fc[data_fc$t > TIME, ]
-rownames(data_fc) <- NULL
-data_fc <- data_fc[1:8, ]
-data_fc
-
 
 ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NULL, test_size, data, list_data) {
   
   # --- Préparation initiale ---
   ct_vars <- I1_vars 
-  data$t <- data$year + data$quarter/4
   data_orig <- data 
   
   I1_varsB <- unique(unlist(sapply(I1_vars, clean_name)))
   I0_varsB <- unique(unlist(sapply(I0_vars, clean_name)))
   All <- unique(c(y, vars, I1_varsB, I0_varsB, "time"))
-  
   data <- subset(data, select = All)
   data <- na.omit(data)
   
@@ -1140,31 +1124,28 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
   ###############
   # Forecasting 
   ###############
-  last_idx   <- nrow(data)
-  last_train <- data[last_idx, ]
+  last_idx   <- nrow(data_orig)
+  last_train <- data_orig[last_idx, ]
   
   y_prev     <- last_train[[y]]
   ECT_prev   <- ECT[length(ECT)] # Dernier ECT du train
-  TIME     <- last_train[["t"]]
-  
+  TIME_val   <- as.numeric(last_train[["t"]])
   # Récupération des données futures
   data_fc <- data_forecast(data_orig, list_data, 
                            c("EURIBOR", "Taux_long", "salaires", "taux_epargne"),
                            c("chomage"), c("PIB_variation", "FBCF_variation"),
-                           TIME)
-  
+                           TIME_val)
   data_fc <- as.data.frame(data_fc)
-  # On filtre pour ne prendre que ce qui est strictement après le train
-  data_fc <- data_fc[data_fc$t > TIME, ] 
+  data_fc <- data_fc[data_fc$t > TIME_val, ] 
   
-
   n_fc <- test_size * 4
+  
   if (nrow(data_fc) < n_fc) {
     stop("Pas assez de données dans data_fc")
   }
   
+  data_fc <- data.frame(data_fc[1:n_fc, ])
   rownames(data_fc) <- NULL
-  data_fc <- data_fc[1:n_fc, ]
 
   
   # 1. Calcul du LT
@@ -1225,5 +1206,39 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
     y_prev   <- y_fc[t]
     ECT_fc[t] <- ECT_prev
   }
-  return(data_fc)
+  
+  data_fc[[y]]    <- y_fc
+  
+  df_hist <- data_orig[, c("t", y)]
+  df_hist$type <- "Historique"
+  
+  df_prev <- data_fc[, c("t", y)]
+  df_prev$type <- "Prévision"
+  
+  # Fusion
+  df_total <- rbind(df_hist, df_prev)
+  
+  # 2. Création du graphique
+  p <- ggplot(df_total, aes(x = t, y = .data[[y]])) +
+    # Ligne Historique
+    geom_line(data = df_total %>% filter(t <= TIME_val), 
+              aes(color = "Historique"), size = 1) +
+    # Ligne Prévision (on part de TIME pour la jonction)
+    geom_line(data = df_total %>% filter(t >= TIME_val), 
+              aes(color = "Prévision"), size = 1) +
+    # Esthétique
+    scale_color_manual(values = c("Historique" = "black", "Prévision" = "red2")) +
+    geom_vline(xintercept = TIME_val, linetype = "dotted", color = "grey40") +
+    labs(
+      title = paste("Projection du modèle ECM :", y),
+      subtitle = paste("Raccordement à t =", TIME_val),
+      x = "Temps",
+      y = y,
+      color = ""
+    ) +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+  
+  return(p)
+  return(data_fc) 
 }
