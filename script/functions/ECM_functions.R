@@ -965,3 +965,80 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
   print(rmspe)
 }
 
+ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp = TRUE) {
+  
+  # 1. Préparation du réel (appliqué conditionnellement)
+  y_real <- data[[target_name]]
+  if(use_exp) y_real <- exp(y_real)
+  
+  df_real <- data.frame(t = data$t, value = y_real)
+  
+  all_preds <- data.frame()
+  errors_rmse <- c()
+  errors_rmspe <- c()
+  
+  # 2. Boucle sur les fenêtres de prévision
+  for (n in names(res_list)) {
+    df_fc <- res_list[[n]]
+    t_start_fc <- min(df_fc$t)
+    
+    # Récupération du point de jonction T
+    last_point_train <- data[data$t < t_start_fc, ]
+    last_point_train <- last_point_train[nrow(last_point_train), ]
+    
+    # Valeurs pour cette fenêtre
+    y_fc <- df_fc[[target_name]]
+    y_junction <- last_point_train[[target_name]]
+    
+    # Passage à l'exponentielle si demandé
+    if(use_exp) {
+      y_fc <- exp(y_fc)
+      y_junction <- exp(y_junction)
+    }
+    
+    # Construction du bloc de données pour ggplot
+    df_plot <- data.frame(
+      t = c(last_point_train$t, df_fc$t),
+      value_fc = c(y_junction, y_fc),
+      origin = n
+    )
+    
+    all_preds <- rbind(all_preds, df_plot)
+    
+    # --- Calcul d'erreur (toujours cohérent avec use_exp) ---
+    # On compare les points où le temps concorde
+    real_vals <- y_real[data$t %in% df_fc$t]
+    pred_vals <- y_fc[df_fc$t %in% data$t]
+    
+    if(length(real_vals) > 0) {
+      e <- real_vals - pred_vals
+      errors_rmse  <- c(errors_rmse, sqrt(mean(e^2)))
+      errors_rmspe <- c(errors_rmspe, sqrt(mean((e/real_vals)^2)) * 100)
+    }
+  }
+  
+  # --- 3. Graphique ggplot ---
+  p <- ggplot() +
+    # Données historiques
+    geom_line(data = df_real, aes(x = t, y = value), 
+              color = "black", linewidth = 1.2) +
+    # Segments de prévision (lignes pleines, connectées)
+    geom_line(data = all_preds, aes(x = t, y = value_fc, group = origin, color = origin), 
+              linewidth = 1) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 90, vjust = 0.5), 
+      legend.position = "none",
+      panel.grid.minor = element_blank()
+    ) +
+    scale_x_continuous(breaks = seq(floor(min(df_real$t)), ceiling(max(all_preds$t)), by = 1)) +
+    labs(
+      title = paste("Backtesting ECM :", target_name, if(use_exp) "(Niveau)" else "(Log)"),
+      subtitle = paste0("RMSE moyen : ", round(mean(errors_rmse), 4), 
+                        " | RMSPE moyen : ", round(mean(errors_rmspe), 2), "%"),
+      x = "Date", 
+      y = if(use_exp) paste("exp(", target_name, ")") else target_name
+    )
+  
+  return(p)
+}

@@ -319,7 +319,7 @@ autoplot(preds) +
 
 
 #######################################
-# TEST
+# TEST PREV
 #######################################
 
 res_list <- ECM_expanding_test_plot(
@@ -456,10 +456,10 @@ par(mfrow = c(1, 1))
 
 
 
-plot(data$t, data$log_end_snf, type = "l", col = "gray30", lwd = 2,
+plot(data$t, exp(data$log_end_snf), type = "l", col = "gray30", lwd = 2,
      main = "log_end_snf", xlab = "t", ylab = "log_end_snf",
      xlim = range(c(data$t, all_fc$t)),
-     ylim = c(3.8, 4.5),
+     ylim = c(exp(3.8), exp(4.5)),
      xaxt = "n")
 
 x_all <- c(data$t, all_fc$t)
@@ -481,13 +481,18 @@ cols <- rainbow(length(res_list))
 i <- 1
 for (n in names(res_list)) {
   df <- res_list[[n]]
-  lines(df$t, df$log_end_snf, col = cols[i], lwd = 1, lty = 2)
+  lines(df$t, exp(df$log_end_snf), col = cols[i], lwd = 1, lty = 2)
   i <- i + 1
 }
 
 par(mfrow = c(1, 1))
 
 
+##########################################
+# Plot
+##########################################
+
+ECM_eval_plot(data,res_list, target_name = "log_end_snf", use_exp = TRUE)
 
 
 
