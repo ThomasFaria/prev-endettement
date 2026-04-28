@@ -224,7 +224,7 @@ check_residuals_2(res, lags = 20)
 
 ############# PREDICTION #############
 
-arima_forecast_plot(
+a <- arima_forecast_plot(
   data = data,        
   var_name = "endettement_snf",  
   country = "France",        
@@ -234,5 +234,5 @@ arima_forecast_plot(
   start_plot = as.Date("2014-01-01") 
 )
 
-
+a
 
