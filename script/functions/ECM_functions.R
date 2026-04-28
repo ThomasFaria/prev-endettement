@@ -1048,7 +1048,7 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
 
 
 
-ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NULL, test_size, data, list_data) {
+ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NULL, test_size, data, list_data, window, use_exp = TRUE) {
   
   # --- Préparation initiale ---
   ct_vars <- I1_vars 
@@ -1218,6 +1218,10 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
   # Fusion
   df_total <- rbind(df_hist, df_prev)
   
+  if(use_exp) {
+    df_total[[y]] <- exp(df_total[[y]])
+  }
+  
   # 2. Création du graphique
   p <- ggplot(df_total, aes(x = t, y = .data[[y]])) +
     # Ligne Historique
@@ -1231,12 +1235,13 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
     geom_vline(xintercept = TIME_val, linetype = "dotted", color = "grey40") +
     labs(
       title = paste("Projection du modèle ECM :", y),
-      subtitle = paste("Raccordement à t =", TIME_val),
+      subtitle = paste("Prévision à t =", TIME_val),
       x = "Temps",
       y = y,
       color = ""
     ) +
     theme_minimal() +
+    scale_x_continuous(limits = c(window, NA)) +
     theme(legend.position = "bottom")
   
   return(p)

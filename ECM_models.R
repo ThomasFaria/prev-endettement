@@ -504,7 +504,7 @@ ECM_prevision( y         = "log_end_snf",
                I0_vars   = c(),
                test_size = 2,
                data      = data, 
-               list_data = list_data)
+               list_data = list_data, window = NA, use_exp = T)
 
 
 
