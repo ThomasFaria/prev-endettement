@@ -93,7 +93,7 @@ differencier <- function(df, colonnes = NA) {
                   .names = "{.col}_diff"))
   
   # Supprimer uniquement les NA des colonnes différenciées
-  df <- df %>% drop_na(all_of(paste0(colonnes, "_diff")))
+  df <- df %>% tidyr::drop_na(all_of(paste0(colonnes, "_diff")))
   
   return(df)
 }
