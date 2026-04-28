@@ -497,6 +497,13 @@ ECM_eval_plot(data,res_list, target_name = "log_end_snf", use_exp = TRUE)
 
 
 
+ECM_prevision( y         = "log_end_snf",
+               vars      = c("FBCF", "EURIBOR", "salaires", "chomage"),
+               I1_vars   = c("lag1_log_end_snf", "FBCF"),
+               I0_vars   = c(),
+               test_size = 2,
+               data      = data, 
+               list_data = list_data)
 
 
 
