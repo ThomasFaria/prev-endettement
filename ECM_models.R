@@ -30,7 +30,7 @@ data$log_end_snf <- log(data$endettement_snf)
 
 col <- colnames(data)
 print(col)
-col <- col[!col %in% c("time","Pays")]
+col <- col[!col %in% c("time","Pays","t","log_end_snf","year","quarter")]
 col <- col[sapply(data[col], is.numeric)]
 
 result_stationarity <- stationarity_tests(data, col, countries = c("France"))
@@ -167,7 +167,7 @@ plot(data_f$time, data_f$salaires,
      main = "Taux de croissance",
      xlab = "Date",
      ylab = "Spread (en points)",
-     ylim = range(c(data_f$salaires, data_f$salaires3, salaires3_ma4), na.rm = TRUE))
+     ylim = range(c(data_f$salaires, data_f$salaires3, data_f$salaires3_ma4), na.rm = TRUE))
 
 # Série 2
 lines(data_f$time, data_f$salaires3, 
@@ -204,7 +204,7 @@ plot(data_f$time, data_f$salaires,
      main = "Taux de croissance",
      xlab = "Date",
      ylab = "Spread (en points)",
-     ylim = range(c(data_f$salaires, data_f$salaires3, salaires3_ma4), na.rm = TRUE))
+     ylim = range(c(data_f$salaires, data_f$salaires3, data_f$salaires3_ma4), na.rm = TRUE))
 
 
 # Moyenne mobile (alignée correctement)
@@ -493,6 +493,9 @@ par(mfrow = c(1, 1))
 ##########################################
 
 ECM_eval_plot(data,res_list, target_name = "log_end_snf", use_exp = TRUE)
+
+
+
 
 
 

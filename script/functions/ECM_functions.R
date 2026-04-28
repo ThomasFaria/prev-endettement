@@ -1042,3 +1042,207 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
   
   return(p)
 }
+
+
+ECM_prevision <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = NULL, data) {
+  
+  ct_vars <- I1_vars
+  data$t <- data$year + data$quarter/4
+  data_2 <- data 
+  data <- na.omit(data)
+  
+  # -----------------------------
+  # LONG TERME
+  # -----------------------------
+  formula_lt <- as.formula(
+    paste0(y, " ~ ", paste(vars, collapse = " + "))
+  ) 
+  
+  reg_lt <- lm(formula_lt, data = data) 
+  ECT <- residuals(reg_lt) 
+  
+  # -----------------------------
+  # DATA DIFF
+  # -----------------------------
+  data_diff <-data
+  
+  data_diff[[paste0("diff_", y)]] <- c(NA, diff(data[[y]])) 
+  
+  if(!is.null(ct_vars)){
+    ct_no_lag <- ct_vars[!grepl("^lag", ct_vars)] 
+    for(v in ct_no_lag){
+      diff_name <- paste0("diff_", v) 
+      if(!(diff_name %in% names(data_diff))){
+        data_diff[[diff_name]] <- c(NA, diff(data[[v]])) 
+      } 
+    } 
+  } 
+  
+  # -----------------------------
+  # LAGS I1
+  # -----------------------------
+  lag_vars <- NULL 
+  if(!is.null(ct_vars)){
+    lag_vars <- ct_vars[grepl("^lag[0-9]+_", ct_vars)] 
+    for(lv in lag_vars){
+      lag_val <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv)) 
+      original_var <- sub("^lag[0-9]+_", "", lv) 
+      diff_name <- paste0("diff_", original_var) 
+      
+      if(!(diff_name %in% names(data_diff))){
+        data_diff[[diff_name]] <- c(NA, diff(data[[original_var]])) 
+      } 
+      
+      data_diff[[lv]] <- c(
+        rep(NA, lag_val),
+        head(data_diff[[diff_name]], -lag_val)
+      ) 
+    } 
+  } 
+  
+  # -----------------------------
+  # LAGS I0
+  # -----------------------------
+  lag_vars2 <- NULL 
+  if(!is.null(I0_vars)){
+    lag_vars2 <- I0_vars[grepl("^lag[0-9]+_", I0_vars)] 
+    for(lv in lag_vars2){
+      lag_val2 <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv)) 
+      original_var <- sub("^lag[0-9]+_", "", lv) 
+      
+      data_diff[[lv]] <- c(
+        rep(NA, lag_val2),
+        head(data_diff[[original_var]], -lag_val2)
+      ) 
+    } 
+  }
+  
+  # -----------------------------
+  # ALIGNEMENT FINAL
+  # -----------------------------
+  data_diff <- data_diff[-1, ] 
+  data_diff$ECT <- ECT[-1]
+  data_diff <- na.omit(data_diff)
+  
+  # -----------------------------
+  # VARIABLES ECM
+  # -----------------------------
+  diff_ct_vars <- NULL 
+  if(!is.null(ct_vars)){
+    ct_nolag <- ct_vars[!grepl("^lag", ct_vars)] 
+    if(length(ct_nolag) > 0){
+      diff_ct_vars <- paste0("diff_", ct_nolag) 
+    } 
+  } 
+  
+  all_vars <- c(diff_ct_vars, lag_vars, I0_vars, lag_vars2) 
+  all_vars <- all_vars[!is.na(all_vars)] 
+  all_vars <- all_vars[nchar(all_vars) > 0] 
+  
+  # -----------------------------
+  # ECM - estimation
+  # -----------------------------
+  formula_ecm <- as.formula(
+    paste0("diff_", y, " ~ ", paste(all_vars, collapse = " + "), " + lag(ECT,1)")
+  ) 
+  reg_ecm <- lm(formula_ecm, data = data_diff)
+  
+  # -----------------------------
+  # ECM - formule pour prévision
+  # -----------------------------
+  formula_ecm_fc <- as.formula(
+    paste0("diff_", y, " ~ ", paste(all_vars, collapse = " + "), " + ECT")
+  )
+  reg_ecm_fc <- lm(formula_ecm_fc, data = data_diff %>% dplyr::mutate(ECT = lag(ECT, 1)))
+  
+  ###############
+  # Forecasting
+  ###############
+  last_idx   <- nrow(train)
+  last_train <- train[last_idx, ]
+  
+  y_prev   <- last_train[[y]]
+  ECT_prev <- ECT[length(ECT)] 
+  
+  data_fc <- data_forecast(data_2, list_data, 
+                           c("EURIBOR", "Taux_long", "salaires", "taux_epargne"),
+                           c("chomage"), c("PIB_variation", "FBCF_variation"),
+                           end_train)
+  
+  data_fc <- as.data.frame(data_fc)
+  data_fc <- data_fc[data_fc$t > end_train, ] 
+  
+  
+  n_fc <- test_size * 4
+  if (nrow(data_fc) < n_fc) {
+    stop(paste0("Période demandée trop longue : data_forecast ne fournit que ", 
+                nrow(data_fc), " périodes alors que n_fc = ", n_fc))
+  } else {
+    data_fc <- data_fc[1:n_fc, ]
+  }
+  
+  rownames(data_fc) <- NULL
+  
+  data_fc$y_LT <- predict(reg_lt, newdata = data_fc)
+  
+  for (v in ct_no_lag) {
+    diff_name <- paste0("diff_", v)
+    vals <- c(last_train[[v]], data_fc[[v]])
+    data_fc[[diff_name]] <- diff(vals)
+  }
+  
+  # --- LAGS I1 (Variables différenciées) ---
+  for (lv in lag_vars) {
+    lag_val      <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv))
+    original_var <- sub("^lag[0-9]+_", "", lv)
+    diff_name    <- paste0("diff_", original_var)
+    
+    # On récupère les dernières différences réelles du train
+    # (car diff_name existe dans data_diff)
+    history <- tail(data_diff[[diff_name]], lag_val)
+    all_vals <- c(history, data_fc[[diff_name]])
+    
+    # On décale et on ne garde que les n_fc premières valeurs
+    # head(..., -lag_val) supprime les dernières pour garder la même longueur
+    data_fc[[lv]] <- as.numeric(head(all_vals, n_fc))
+  }
+  
+  for (lv in lag_vars2) {
+    lag_val2     <- as.numeric(sub("^lag([0-9]+)_.*", "\\1", lv))
+    original_var <- sub("^lag[0-9]+_", "", lv)
+    
+    # On récupère les dernières valeurs réelles du train
+    history <- tail(train[[original_var]], lag_val2)
+    all_vals <- c(history, data_fc[[original_var]])
+    
+    # On décale et on ne garde que les n_fc premières valeurs
+    data_fc[[lv]] <- as.numeric(head(all_vals, n_fc))
+  }
+  
+  y_fc   <- rep(NA, n_fc)
+  ECT_fc <- rep(NA, n_fc)
+  
+  for (t in 1:n_fc) {
+    # Injection de l'ECT de la période précédente (t-1)
+    data_fc[t, "ECT"] <- ECT_prev
+    
+    # Prédiction de la variation pour la période t
+    dy_hat <- predict(reg_ecm_fc, newdata = data_fc[t, , drop = FALSE])
+    
+    # Calcul du niveau pour t
+    y_fc[t] <- y_prev + dy_hat
+    
+    # Calcul du nouvel ECT (pour l'étape t+1)
+    ECT_prev <- y_fc[t] - data_fc$y_LT[t]
+    
+    # Mise à jour pour l'itération suivante
+    y_prev   <- y_fc[t]
+    ECT_fc[t] <- ECT_prev
+  }
+  
+  # Stockage final
+  data_fc[[y]]    <- y_fc
+  data_fc$y_LT_fc <- data_fc$y_LT
+  data_fc$ECT     <- ECT_fc
+  
+} 
