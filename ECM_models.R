@@ -371,7 +371,7 @@ e <- ECM_prevision( y         = "log_end_snf",
                I0_vars   = c(),
                test_size = 2,
                data      = data, 
-               list_data = list_data, window = 2014, use_exp = T)
+               list_data = list_data, window = 2014, use_exp = T, salaire_adj = T, Immo_adj = F)
 
 (e + arima_plt)
 

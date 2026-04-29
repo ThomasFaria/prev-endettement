@@ -1147,7 +1147,7 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
 
 
 
-ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NULL, test_size, data, list_data, window, use_exp = TRUE, salaire_adj = T, immo_adj = F) {
+ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NULL, test_size, data, list_data, window, use_exp = TRUE, salaire_adj = T, Immo_adj = F) {
   
   # --- Préparation initiale ---
   ct_vars <- I1_vars 
@@ -1235,8 +1235,8 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
                            c("chomage"), c("PIB_variation", "FBCF_variation"),
                            TIME_val)
   data_fc <- as.data.frame(data_fc)
-  data_fc <- data_fc[data_fc$t > end_train, ] 
-  data_orig_t <- data_2[data_2$t <= end_train, ] 
+  data_fc <- data_fc[data_fc$t > TIME_val, ] 
+  data_orig_t <- data_orig
   m_spread = mean(data_orig_t$Taux_immo - data_orig_t$Taux_long)
   data_fc$Taux_immo <- data_fc$Taux_long + m_spread
   
@@ -1262,7 +1262,7 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
     
     sal_transformed <- (sal_final - mean_y) * (sd_x / sd_y) + mean_x
     n_hist <- nrow(data_orig_t)
-    sal_forecast_only <- sal_final[(n_hist + 1):length(sal_final)]
+    sal_forecast_only <- sal_final[(n_hist):length(sal_final)]
     
     data_fc$salaires <- sal_forecast_only
   }
@@ -1324,6 +1324,7 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
     spread_forecast <- as.numeric(fc$mean)
     data_fc$Taux_immo <- data_fc$Taux_long + spread_forecast
   }
+  
   
   n_fc <- test_size * 4
   
