@@ -332,6 +332,8 @@ res_list <- ECM_expanding_test_plot(
   test_size = 2,
   start     = 2015,
   step      = 0.5,
+  salaire_adj = F,
+  Immo_adj = F,
   data      = data
 )
 res_list

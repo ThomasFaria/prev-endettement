@@ -560,8 +560,15 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
    }
    res[[v_base]] <- out
  }
+   
  return(res)
 }
+
+
+data_forecast(data, list_data, 
+                         c("EURIBOR", "Taux_long", "salaires", "taux_epargne"),
+                         c("chomage"), c("PIB_variation", "FBCF_variation"), sal_adj = T, immo_adj = T,
+                         2015.5)
 
 
 ECM_expanding_test_plot <- function(y,
@@ -571,6 +578,7 @@ ECM_expanding_test_plot <- function(y,
                                     test_size  = 2,
                                     start,
                                     step = 1,
+                                    salaire_adj = T,
                                     data) {
   res_list <- list()
   ct_vars <- I1_vars
@@ -711,6 +719,34 @@ ECM_expanding_test_plot <- function(y,
     
     data_fc <- as.data.frame(data_fc)
     data_fc <- data_fc[data_fc$t > end_train, ] 
+    data_orig_t <- data_2[data_2$t <= end_train, ] 
+    
+    if (salaire_adj == TRUE) {
+      salaires3 <- na.omit(data_orig_t$salaires3)
+      sal_complet <- c(salaires3, data_fc$salaires)
+      sal_ma <- stats::filter(sal_complet, rep(1/4, 4), sides = 1)
+      
+      # --- Lag de 1 (Décalage temporel) ---
+      # On décale pour que la valeur en t soit celle observée/calculée en t-1
+      sal_final <- c(NA, head(sal_ma, -1))
+      
+      # --- 4. Rescaling (Recentrage sur l'historique uniquement) ---
+      # On calcule les paramètres sur la partie historique pour ne pas "tricher"
+      x_hist <- data_orig_t$salaires
+      y_hist <- data_orig_t$salaires3
+      
+      sd_x <- sd(x_hist, na.rm = TRUE)
+      sd_y <- sd(y_hist, na.rm = TRUE)
+      mean_x <- mean(x_hist, na.rm = TRUE)
+      mean_y <- mean(y_hist, na.rm = TRUE)
+      
+     
+      sal_transformed <- (sal_final - mean_y) * (sd_x / sd_y) + mean_x
+      n_hist <- nrow(data_orig_t)
+      sal_forecast_only <- sal_final[(n_hist + 1):length(sal_final)]
+      
+      data_fc$salaires <- sal_forecast_only
+    }
     
    
     n_fc <- test_size * 4
