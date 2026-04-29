@@ -1,3 +1,4 @@
+
 source("script/functions/retrieval_webstat.R")
 source("script/functions/utilitaires.R")
 source("script/functions/descriptives_functions.R")
@@ -57,15 +58,15 @@ latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 ######################
 
 ############# SNF SANS COVID ###############
-
-
+# On test le ARIMA classique 
+############################################
 res_no_covid <- rolling_arima_errors(data,
                      p_max = 3,
                      q_max = 3,
-                     var_name = "endettement_snf",
+                     var_name = "endettement_menage",
                      d = 1,
                      country = "France",
-                     train_size = 60,
+                     train_size = 64, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 pour directement comparer aux modèles ECM 
                      test_size = 12,
                      step = 4,
                      covid_windows = c("window_2019","window_2020","window_2021"),
@@ -87,22 +88,21 @@ print(res_arimax)
 latex_code <- print(xtable(res_arimax), include.rownames = FALSE)
 
 
-
 errors_no_covid  <- res_no_covid$errors
 merrors_no_covid  <- res_no_covid$merrors
 summary_no_covid <- res_no_covid$summary_table
 
-############# SNF AVEC COVID ###############
-
-
+############# SNF AVEC COVID ##################################################################
+# On test le ARIMA avec covid (test uniquement post covid !!! RMSPE pas directement comparable)
+###############################################################################################
 #### CHOC TRANSITOIRE ####
 res_covid <- rolling_arima_errors(data,
                      p_max = 3,
                      q_max = 3,
-                     var_name = "endettement_snf",
+                     var_name = "endettement_menage",
                      d = 1,
                      country = "France",
-                     train_size = 60,
+                     train_size = 64, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 pour directement comparer aux modèles ECM 
                      test_size = 8,
                      step = 4,
                      covid_windows = c("window_2020", "window_2021", "window_2019"),
@@ -115,10 +115,29 @@ errors_covid  <- res_covid$errors
 merrors_covid  <- res_covid$merrors
 summary_covid <- res_covid$summary_table
 
-
 errors_covid_filled <- errors_covid 
 merrors_covid_filled <- merrors_covid
 
+
+########### COMPARAISON AVEC/SANS COVID###########
+
+comparison_table <- compare_arima_errors(
+  errors_no_covid,
+  errors_covid
+)
+
+print(comparison_table)
+
+comparison_table2 <-  comparison_table %>% 
+  select(RMSE_mean,RMSE_covid_mean)
+
+latex_code <- print(xtable(comparison_table2), include.rownames = T)
+
+
+
+################################################################################################
+# On recalcul le RMSPE Moyen avec RMSPE classique pre covid et avec dummy covid pour post covid
+###############################################################################################
 
 for (col in colnames(errors_covid)) {
   if (col %in% colnames(errors_no_covid)) {
@@ -143,10 +162,10 @@ for (col in colnames(merrors_covid)) {
 print(errors_covid_filled)
 print(merrors_covid_filled)
 
-errors_covid_filled <- errors_covid_filled %>% select(-window_2016)
+errors_covid_filled <- errors_covid_filled %>% select(-window_2017)
+errors_covid_filled
 
 latex_code <- print(xtable(errors_covid_filled), include.rownames = T)
-
 
 model_names <- rownames(merrors_covid_filled)
 summary_table <- data.frame(
@@ -167,26 +186,16 @@ for (i in seq_along(model_names)) {
   summary_table$mean_RMSPE[i] <- mean(rmspe_vals, na.rm = TRUE)
 }
 
-summary_table <- summary_table[order(summary_table$mean_RMSPE), ]
 
-# Affichage
-print(summary_table)
+
+#####################
+# Résultats
+#####################
+
+summary_table <- summary_table[order(summary_table$mean_RMSPE), ]
+summary_table
 
 latex_code <- print(xtable(summary_table), include.rownames = FALSE)
-
-########### COMPARAISON AVEC/SANS COVID###########
-
-comparison_table <- compare_arima_errors(
-  errors_no_covid,
-  errors_covid
-)
-
-print(comparison_table)
-
-comparison_table2 <-  comparison_table %>% 
-  select(RMSE_mean,RMSE_covid_mean)
-
-latex_code <- print(xtable(comparison_table2), include.rownames = T)
 
 
 
