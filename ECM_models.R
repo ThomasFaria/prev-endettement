@@ -332,18 +332,35 @@ res_list <- ECM_expanding_test_plot(
   test_size = 2,
   start     = 2015,
   step      = 0.5,
-  salaire_adj = F,
+  salaire_adj = T,
+  Immo_adj = F,
+  data      = data
+)
+res_list
+ECM_eval_plot(data,res_list, target_name = "log_end_snf", use_exp = TRUE)
+
+
+res_list <- ECM_expanding_test_plot(
+  y         = "endettement_menage",
+  vars      = c("Taux_immo", "salaires", "taux_epargne" ),
+  I1_vars   = c("lag1_endettement_menage", "PIB","lag1_Taux_immo","EURIBOR"),
+  I0_vars   = c(),
+  test_size = 2,
+  start     = 2015,
+  step      = 0.5,
+  salaire_adj = T,
   Immo_adj = F,
   data      = data
 )
 res_list
 
+ECM_eval_plot(data,res_list, target_name = "endettement_menage", use_exp = F)
+
+
 
 ##########################################
 # Plot
 ##########################################
-
-ECM_eval_plot(data,res_list, target_name = "log_end_snf", use_exp = TRUE)
 
 
 
@@ -508,5 +525,21 @@ for (n in names(res_list)) {
 
 par(mfrow = c(1, 1))
 
+res_list
+
+plot(data$t, data$Taux_immo, type = "l", col = "gray30", lwd = 2,
+     main = "Taux Immo", xlab = "t", ylab = "Taux_Immo",
+     xlim = range(c(data$t, all_fc$t)),
+     ylim = range(c(data$Taux_immo, all_fc$Taux_immo), na.rm = TRUE))
+
+cols <- rainbow(length(res_list))
+i <- 1
+for (n in names(res_list)) {
+  df <- res_list[[n]]
+  lines(df$t, df$Taux_immo, col = cols[i], lwd = 1, lty = 2)
+  i <- i + 1
+}
+
+par(mfrow = c(1, 1))
 
 

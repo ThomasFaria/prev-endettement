@@ -579,6 +579,7 @@ ECM_expanding_test_plot <- function(y,
                                     start,
                                     step = 1,
                                     salaire_adj = T,
+                                    Immo_adj = T,
                                     data) {
   res_list <- list()
   ct_vars <- I1_vars
@@ -720,6 +721,8 @@ ECM_expanding_test_plot <- function(y,
     data_fc <- as.data.frame(data_fc)
     data_fc <- data_fc[data_fc$t > end_train, ] 
     data_orig_t <- data_2[data_2$t <= end_train, ] 
+    m_spread = mean(data_orig_t$Taux_immo - data_orig_t$Taux_long)
+    data_fc$Taux_immo <- data_fc$Taux_long + m_spread
     
     if (salaire_adj == TRUE) {
       salaires3 <- na.omit(data_orig_t$salaires3)
@@ -746,6 +749,40 @@ ECM_expanding_test_plot <- function(y,
       sal_forecast_only <- sal_final[(n_hist + 1):length(sal_final)]
       
       data_fc$salaires <- sal_forecast_only
+    }
+    
+    
+    if (Immo_adj == TRUE) {
+     
+      data_fc$Taux_immo <- NA 
+      
+      h <- nrow(data_fc)
+      
+      data_orig_t$spreads = data_orig_t$Taux_immo - data_orig_t$Taux_long
+      
+      regimes_possibles <- c("R1_pre_crise", "R2_crise", "R3_taux_bas", "R4_remontee")
+      
+      # 2. Appliquer le case_when puis transformer en FACTEUR avec les levels
+      data_orig_t <- data_orig_t %>%
+        mutate(regime = case_when(
+          time < "2008-09-01"  ~ "R1_pre_crise",
+          time < "2011-12-01"  ~ "R2_crise",
+          time < "2021-12-01"  ~ "R3_taux_bas",
+          TRUE                 ~ "R4_remontee"
+        )) %>%
+        mutate(regime = factor(regime, levels = regimes_possibles))
+      
+      # 3. Créer la matrice xreg (R va créer une colonne pour R4 même si elle est vide)
+      xreg_futur <- model.matrix(~ regime, data = data_fc_temp)[, -1]
+      
+      
+      mod_1 <- Arima(data_orig_t$spreads,
+                     order = c(1,0,1),
+                     xreg = xreg_futur)
+      
+      fc <- forecast(mod_1, h = h, xreg = xreg_futur)
+      spread_forecast <- as.numeric(fc$mean)
+      data_fc$Taux_immo <- data_fc$Taux_long + spread_forecast
     }
     
    
