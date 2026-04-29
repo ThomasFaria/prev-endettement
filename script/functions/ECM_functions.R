@@ -1147,7 +1147,7 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
 
 
 
-ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NULL, test_size, data, list_data, window, use_exp = TRUE) {
+ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NULL, test_size, data, list_data, window, use_exp = TRUE, salaire_adj = T, immo_adj = F) {
   
   # --- Préparation initiale ---
   ct_vars <- I1_vars 
@@ -1235,7 +1235,95 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
                            c("chomage"), c("PIB_variation", "FBCF_variation"),
                            TIME_val)
   data_fc <- as.data.frame(data_fc)
-  data_fc <- data_fc[data_fc$t > TIME_val, ] 
+  data_fc <- data_fc[data_fc$t > end_train, ] 
+  data_orig_t <- data_2[data_2$t <= end_train, ] 
+  m_spread = mean(data_orig_t$Taux_immo - data_orig_t$Taux_long)
+  data_fc$Taux_immo <- data_fc$Taux_long + m_spread
+  
+  if (salaire_adj == TRUE) {
+    salaires3 <- na.omit(data_orig_t$salaires3)
+    sal_complet <- c(salaires3, data_fc$salaires)
+    sal_ma <- stats::filter(sal_complet, rep(1/4, 4), sides = 1)
+    
+    # --- Lag de 1 (Décalage temporel) ---
+    # On décale pour que la valeur en t soit celle observée/calculée en t-1
+    sal_final <- c(NA, head(sal_ma, -1))
+    
+    # --- 4. Rescaling (Recentrage sur l'historique uniquement) ---
+    # On calcule les paramètres sur la partie historique pour ne pas "tricher"
+    x_hist <- data_orig_t$salaires
+    y_hist <- data_orig_t$salaires3
+    
+    sd_x <- sd(x_hist, na.rm = TRUE)
+    sd_y <- sd(y_hist, na.rm = TRUE)
+    mean_x <- mean(x_hist, na.rm = TRUE)
+    mean_y <- mean(y_hist, na.rm = TRUE)
+    
+    
+    sal_transformed <- (sal_final - mean_y) * (sd_x / sd_y) + mean_x
+    n_hist <- nrow(data_orig_t)
+    sal_forecast_only <- sal_final[(n_hist + 1):length(sal_final)]
+    
+    data_fc$salaires <- sal_forecast_only
+  }
+  
+  
+  if (Immo_adj == TRUE) {
+    
+    # 1. Calcul du spread et définition des régimes sur l'historique
+    data_orig_t$spreads <- data_orig_t$Taux_immo - data_orig_t$Taux_long
+    regimes_possibles <- c("R1_pre_crise", "R2_crise", "R3_taux_bas", "R4_remontee")
+    
+    data_orig_t <- data_orig_t %>%
+      mutate(regime = case_when(
+        t < 2008.75 ~ "R1_pre_crise",
+        t < 2011.95 ~ "R2_crise",
+        t < 2021.95 ~ "R3_taux_bas",
+        TRUE        ~ "R4_remontee"
+      )) %>%
+      mutate(regime = factor(regime, levels = regimes_possibles))
+    
+    # Création de la matrice xreg complète
+    xreg_train_full <- model.matrix(~ regime, data = data_orig_t)[, -1]
+    
+    # --- SÉCURITÉ OPTIM : Nettoyage des colonnes sans variation (que des 0) ---
+    # On ne garde que les colonnes qui ont des valeurs dans le passé pour l'Arima
+    cols_actives <- colSums(xreg_train_full != 0) > 0
+    xreg_train <- xreg_train_full[, cols_actives, drop = FALSE]
+    
+    # 2. Préparation du futur (data_fc)
+    data_fc_p <- data_fc %>%
+      mutate(regime = case_when(
+        t < 2008.75 ~ "R1_pre_crise",
+        t < 2011.95 ~ "R2_crise",
+        t < 2021.95 ~ "R3_taux_bas",
+        TRUE        ~ "R4_remontee"
+      )) %>%
+      mutate(regime = factor(regime, levels = regimes_possibles))
+    
+    # Création de xreg_futur et alignement sur les colonnes de l'entraînement
+    xreg_futur_full <- model.matrix(~ regime, data = data_fc_p)[, -1]
+    xreg_futur <- xreg_futur_full[, colnames(xreg_train), drop = FALSE]
+    
+    ## 3. Estimation de l'ARIMA(1,0,1)
+    mod_1 <- Arima(data_orig_t$spreads,
+                   order = c(1,0,1),
+                   xreg = xreg_train,
+                   method = "CSS-ML") 
+    
+    # Estimation de l'ARIMA(1,0,1) sans reg
+    # mod_1 <- Arima(data_orig_t$spreads,
+    #                order = c(2,1,0))
+    
+    # 4. Prévision
+    h <- nrow(data_fc)
+    fc <- forecast(mod_1, h = h, xreg = xreg_futur)
+    # fc <- forecast(mod_1, h = h)
+    
+    # 5. Reconstruction du Taux Immo final
+    spread_forecast <- as.numeric(fc$mean)
+    data_fc$Taux_immo <- data_fc$Taux_long + spread_forecast
+  }
   
   n_fc <- test_size * 4
   
