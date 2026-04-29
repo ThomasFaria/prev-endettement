@@ -747,38 +747,61 @@ ECM_expanding_test_plot <- function(y,
     
     
     if (Immo_adj == TRUE) {
-     
-      data_fc$Taux_immo <- NA 
       
-      h <- nrow(data_fc)
-      
-      data_orig_t$spreads = data_orig_t$Taux_immo - data_orig_t$Taux_long
-      
+      # 1. Calcul du spread et définition des régimes sur l'historique
+      data_orig_t$spreads <- data_orig_t$Taux_immo - data_orig_t$Taux_long
       regimes_possibles <- c("R1_pre_crise", "R2_crise", "R3_taux_bas", "R4_remontee")
       
-      # 2. Appliquer le case_when puis transformer en FACTEUR avec les levels
       data_orig_t <- data_orig_t %>%
         mutate(regime = case_when(
-          time < "2008-09-01"  ~ "R1_pre_crise",
-          time < "2011-12-01"  ~ "R2_crise",
-          time < "2021-12-01"  ~ "R3_taux_bas",
-          TRUE                 ~ "R4_remontee"
+          t < 2008.75 ~ "R1_pre_crise",
+          t < 2011.95 ~ "R2_crise",
+          t < 2021.95 ~ "R3_taux_bas",
+          TRUE        ~ "R4_remontee"
         )) %>%
         mutate(regime = factor(regime, levels = regimes_possibles))
       
-      # 3. Créer la matrice xreg (R va créer une colonne pour R4 même si elle est vide)
-      xreg_futur <- model.matrix(~ regime, data = data_fc_temp)[, -1]
+      # Création de la matrice xreg complète
+      xreg_train_full <- model.matrix(~ regime, data = data_orig_t)[, -1]
       
+      # --- SÉCURITÉ OPTIM : Nettoyage des colonnes sans variation (que des 0) ---
+      # On ne garde que les colonnes qui ont des valeurs dans le passé pour l'Arima
+      cols_actives <- colSums(xreg_train_full != 0) > 0
+      xreg_train <- xreg_train_full[, cols_actives, drop = FALSE]
       
+      # 2. Préparation du futur (data_fc)
+      data_fc_p <- data_fc %>%
+        mutate(regime = case_when(
+          t < 2008.75 ~ "R1_pre_crise",
+          t < 2011.95 ~ "R2_crise",
+          t < 2021.95 ~ "R3_taux_bas",
+          TRUE        ~ "R4_remontee"
+        )) %>%
+        mutate(regime = factor(regime, levels = regimes_possibles))
+      
+      # Création de xreg_futur et alignement sur les colonnes de l'entraînement
+      xreg_futur_full <- model.matrix(~ regime, data = data_fc_p)[, -1]
+      xreg_futur <- xreg_futur_full[, colnames(xreg_train), drop = FALSE]
+      
+    ## 3. Estimation de l'ARIMA(1,0,1)
       mod_1 <- Arima(data_orig_t$spreads,
                      order = c(1,0,1),
-                     xreg = xreg_futur)
+                     xreg = xreg_train,
+                    method = "CSS-ML") 
       
+       # Estimation de l'ARIMA(1,0,1) sans reg
+       # mod_1 <- Arima(data_orig_t$spreads,
+       #                order = c(2,1,0))
+      
+      # 4. Prévision
+      h <- nrow(data_fc)
       fc <- forecast(mod_1, h = h, xreg = xreg_futur)
+     # fc <- forecast(mod_1, h = h)
+      
+      # 5. Reconstruction du Taux Immo final
       spread_forecast <- as.numeric(fc$mean)
       data_fc$Taux_immo <- data_fc$Taux_long + spread_forecast
     }
-    
    
     n_fc <- test_size * 4
     if (nrow(data_fc) < n_fc) {
