@@ -206,13 +206,19 @@ latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 ############# GRAPH DIFFERENTE PREDICTION #############
 
 
-
-arima_expanding_test_plot(data, var_name = "endettement_menage", country = "France",
+arima_expanding_test_plot(data, var_name = "endettement_snf", country = "France",
                    train_size = 54, test_size = 8, step = 4,
-                   p = 1, d = 1, q = 0,
+                   p = 1, d = 1, q = 1,
                    covid = T,
                    covid_start = 84,
                    covid_end   = 92)
+
+arima_expanding_test_plot(data, var_name = "endettement_menage", country = "France",
+                          train_size = 54, test_size = 8, step = 4,
+                          p = 0, d = 1, q = 0,
+                          covid = T,
+                          covid_start = 84,
+                          covid_end   = 92)
 
 
 data$covid <- ifelse(data$time >= as.Date("2019-01-01") & data$time <= as.Date("2021-12-31"), 1, 0)
@@ -244,4 +250,6 @@ arima_plt <- arima_forecast_plot(
 )
 
 arima_plt 
+
+
 

@@ -1120,18 +1120,27 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
               linewidth = 1) +
     theme_minimal() +
     theme(
-      axis.text.x = element_text(angle = 90, vjust = 0.5), 
-      legend.position = "none",
+      axis.text.x = element_text(angle = 90, vjust = 0.5),
+      legend.position = "bottom",
+      legend.title = element_blank(),
+      legend.text = element_text(size = 7),
+      legend.key.width = unit(0.4, "cm"),
+      legend.key.height = unit(0.3, "cm"),
+      guides(color = guide_legend(nrow = 3)),
       panel.grid.minor = element_blank()
     ) +
     scale_x_continuous(breaks = seq(floor(min(df_real$t)), ceiling(max(all_preds$t)), by = 1)) +
+    scale_y_continuous(breaks = seq(30, 90, by = 2.5)) +
+    coord_cartesian(ylim = c(30, 90)) +
     labs(
       title = paste("Backtesting ECM :", target_name, if(use_exp) "(Niveau)" else "(Log)"),
       subtitle = paste0("RMSE moyen : ", round(mean(errors_rmse), 4), 
                         " | RMSPE moyen : ", round(mean(errors_rmspe), 2), "%"),
       x = "Date", 
       y = if(use_exp) paste("exp(", target_name, ")") else target_name
-    )
+    ) +
+    guides(color = guide_legend(nrow = 3))
+    
   
   return(p)
 }

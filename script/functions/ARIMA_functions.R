@@ -1118,7 +1118,8 @@ arima_expanding_test_plot <- function(data,
       x = "Date",
       y = var_name
     ) +
-    coord_cartesian(ylim = c(NA, 90))
+    scale_y_continuous(breaks = seq(30, 90, by = 2.5)) +
+    coord_cartesian(ylim = c(30, 90))
 }
 
 #######################
