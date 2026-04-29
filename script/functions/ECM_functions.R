@@ -707,9 +707,11 @@ ECM_expanding_test_plot <- function(y,
     y_prev   <- last_train[[y]]
     ECT_prev <- ECT[length(ECT)] 
     
+
+    
     data_fc <- data_forecast(data_2, list_data, 
-                             c("EURIBOR", "Taux_long", "salaires", "taux_epargne"),
-                             c("chomage"), c("PIB_variation", "FBCF_variation"),
+                             vars_cst = c("salaires","taux_epargne"),
+                             vars_inter = c("EURIBOR","chomage", "Taux_long"), tx_var=c("PIB_variation", "FBCF_variation"),
                              end_train)
     
     data_fc <- as.data.frame(data_fc)
