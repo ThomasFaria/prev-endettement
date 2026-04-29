@@ -565,12 +565,6 @@ data_forecast <- function(data, list_data, vars_cst, vars_inter, tx_var, date) {
 }
 
 
-data_forecast(data, list_data, 
-                         c("EURIBOR", "Taux_long", "salaires", "taux_epargne"),
-                         c("chomage"), c("PIB_variation", "FBCF_variation"), sal_adj = T, immo_adj = T,
-                         2015.5)
-
-
 ECM_expanding_test_plot <- function(y,
                                     vars,
                                     I1_vars = NULL,
