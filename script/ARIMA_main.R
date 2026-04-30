@@ -63,18 +63,21 @@ latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 res_no_covid <- rolling_arima_errors(data,
                      p_max = 3,
                      q_max = 3,
-                     var_name = "endettement_menage",
+                     var_name = "endettement_snf",
                      d = 1,
                      country = "France",
                      train_size = 64, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 pour directement comparer aux modèles ECM 
                      test_size = 12,
-                     step = 4,
+                     step = 2,
                      covid_windows = c("window_2019","window_2020","window_2021"),
                      covid = FALSE,
                      covid_start = NULL,
                      covid_end = NULL)
 
 print(res_no_covid)
+# ON Récupère ici le résultat de la Random Walk ARIMA(0,1,0) pas de dummy covid pour RW
+
+
 latex_code <- print(xtable(res_no_covid$summary_table), include.rownames = FALSE)
 
 
@@ -104,7 +107,7 @@ res_covid <- rolling_arima_errors(data,
                      country = "France",
                      train_size = 64, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 pour directement comparer aux modèles ECM 
                      test_size = 8,
-                     step = 4,
+                     step = 2,
                      covid_windows = c("window_2020", "window_2021", "window_2019"),
                      covid = TRUE,
                      covid_start = 80,
@@ -193,7 +196,7 @@ for (i in seq_along(model_names)) {
 #####################
 
 summary_table <- summary_table[order(summary_table$mean_RMSPE), ]
-summary_table
+summary_table # On récupère ici performance modèle ARIMA
 
 latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 
@@ -206,21 +209,21 @@ latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 ############# GRAPH DIFFERENTE PREDICTION #############
 
 
-arima_expanding_test_plot(data, var_name = "endettement_snf", country = "France",
-                   train_size = 54, test_size = 8, step = 4,
+b <- arima_expanding_test_plot(data, var_name = "endettement_snf", country = "France",
+                   train_size = 62, test_size = 8, step = 4,
                    p = 1, d = 1, q = 1,
                    covid = T,
                    covid_start = 84,
                    covid_end   = 92)
 
 arima_expanding_test_plot(data, var_name = "endettement_menage", country = "France",
-                          train_size = 54, test_size = 8, step = 4,
-                          p = 0, d = 1, q = 0,
+                          train_size = 62, test_size = 8, step = 4,
+                          p = 1, d = 1, q = 0,
                           covid = T,
                           covid_start = 84,
                           covid_end   = 92)
 
-
+a+b
 data$covid <- ifelse(data$time >= as.Date("2019-01-01") & data$time <= as.Date("2021-12-31"), 1, 0)
 
 # Ajustement du modèle ARIMAX avec la variable Covid

@@ -588,7 +588,7 @@ ECM_expanding_test_plot <- function(y,
   end <- floor(end*2) /2
   pred_list <- list()
   
-  for (end_train in seq(start, end - test_size, by = step)) {
+  for (end_train in seq(start, end - test_size + 1, by = step)) {
     
     
     train <- data[data$t <= end_train, ]
