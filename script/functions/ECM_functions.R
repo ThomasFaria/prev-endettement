@@ -588,7 +588,7 @@ ECM_expanding_test_plot <- function(y,
   end <- floor(end*2) /2
   pred_list <- list()
   
-  for (end_train in seq(start, end - test_size + 1, by = step)) {
+  for (end_train in seq(start, end - test_size, by = step)) {
     
     
     train <- data[data$t <= end_train, ]
@@ -1147,7 +1147,11 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
   return(p)
 }
 
+last_idx   <- nrow(data)
+last_train <- data[last_idx, ]
+last_train
 
+View(data)
 
 ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NULL, test_size, data, list_data, window, use_exp = TRUE, salaire_adj = T, Immo_adj = F) {
   
@@ -1233,9 +1237,10 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
   TIME_val   <- as.numeric(last_train[["t"]])
   # Récupération des données futures
   data_fc <- data_forecast(data_orig, list_data, 
-                           vars_cst = c("salaires","taux_epargne"),
-                           vars_inter = c("EURIBOR","chomage", "Taux_long"), tx_var=c("PIB_variation", "FBCF_variation"),
+                           c("salaires", "taux_epargne"),
+                           c("chomage","EURIBOR", "Taux_long"), c("PIB_variation", "FBCF_variation"),
                            TIME_val)
+  
   data_fc <- as.data.frame(data_fc)
   data_fc <- data_fc[data_fc$t > TIME_val, ] 
   data_orig_t <- data_orig
