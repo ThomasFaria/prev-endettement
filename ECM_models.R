@@ -331,13 +331,15 @@ res_list <- ECM_expanding_test_plot(
   I0_vars   = c(),
   test_size = 2,
   start     = 2015,
-  step      = 0.5,
+  step      = 1,
   salaire_adj = T,
   Immo_adj = F,
   data      = data
 )
 res_list
+
 ECM_eval_plot(data,res_list, target_name = "log_end_snf", use_exp = TRUE)
+
 
 
 res_list <- ECM_expanding_test_plot(
@@ -347,15 +349,15 @@ res_list <- ECM_expanding_test_plot(
   I0_vars   = c(),
   test_size = 2,
   start     = 2015,
-  step      = 0.5,
+  step      = 1,
   salaire_adj = T,
-  Immo_adj = F,
+  Immo_adj = T,
   data      = data
 )
 res_list
 ECM_eval_plot(data,res_list, target_name = "endettement_menage", use_exp = F)
 
-
+a+b
 
 ##########################################
 # Plot
@@ -364,7 +366,7 @@ ECM_eval_plot(data,res_list, target_name = "endettement_menage", use_exp = F)
 
 
 
-e <- ECM_prevision( y         = "log_end_snf",
+ECM_prevision( y         = "log_end_snf",
                vars      = c("FBCF", "EURIBOR", "salaires", "chomage"),
                I1_vars   = c("lag1_log_end_snf", "FBCF"),
                I0_vars   = c(),
@@ -372,7 +374,15 @@ e <- ECM_prevision( y         = "log_end_snf",
                data      = data, 
                list_data = list_data, window = 2014, use_exp = T, salaire_adj = T, Immo_adj = F)
 
-(e + arima_plt)
+
+ECM_prevision( y         = "endettement_menage",
+               vars      = c("FBCF", "EURIBOR", "salaires", "chomage"),
+               I1_vars   = c("lag1_log_end_snf", "FBCF"),
+               I0_vars   = c(),
+               test_size = 2,
+               data      = data, 
+               list_data = list_data, window = 2014, use_exp = F, salaire_adj = T, Immo_adj = F)
+
 
 
 #####################################

@@ -1431,6 +1431,7 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
       color = ""
     ) +
     theme_minimal() +
+    scale_y_continuous(limits = c(50, NA)) +
     scale_x_continuous(limits = c(window, NA)) +
     theme(legend.position = "bottom")
   
