@@ -1410,7 +1410,7 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
   
   if(use_exp) {
     df_total[[y]] <- exp(df_total[[y]])
-    data_fc$prévisions <- data_fc[[y]]
+    data_fc$prévisions <- exp(data_fc[[y]])
   }
   
   
