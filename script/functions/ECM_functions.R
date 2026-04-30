@@ -1347,7 +1347,10 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
     # On concatène le dernier point réel avec les 8 points futurs = 9 valeurs
     # diff() de 9 valeurs donne exactement les 8 variations attendues
     vals <- c(last_train[[v]], data_fc[[v]])
-    data_fc[[diff_name]] <- diff(vals)
+    diffs <- diff(vals)
+    
+    last_diff_obs <- tail(data_diff[[diff_name]], 1)
+    data_fc[[diff_name]] <- c(last_diff_obs, head(na.omit(diffs), n_fc - 1))
   }
   
   # 3. Gestion des LAGS I1 (Doit faire 8 lignes)
