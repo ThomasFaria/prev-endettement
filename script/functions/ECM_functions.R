@@ -1412,6 +1412,8 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
     df_total[[y]] <- exp(df_total[[y]])
   }
   
+  data_fc$prévisions <- df_total[[y]]
+  
   # 2. Création du graphique
   p <- ggplot(df_total, aes(x = t, y = .data[[y]])) +
     # Ligne Historique
