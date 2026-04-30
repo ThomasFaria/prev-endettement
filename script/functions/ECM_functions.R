@@ -1233,8 +1233,8 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
   TIME_val   <- as.numeric(last_train[["t"]])
   # Récupération des données futures
   data_fc <- data_forecast(data_orig, list_data, 
-                           c("EURIBOR", "Taux_long", "salaires", "taux_epargne"),
-                           c("chomage"), c("PIB_variation", "FBCF_variation"),
+                           vars_cst = c("salaires","taux_epargne"),
+                           vars_inter = c("EURIBOR","chomage", "Taux_long"), tx_var=c("PIB_variation", "FBCF_variation"),
                            TIME_val)
   data_fc <- as.data.frame(data_fc)
   data_fc <- data_fc[data_fc$t > TIME_val, ] 

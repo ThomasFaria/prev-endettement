@@ -357,8 +357,6 @@ res_list <- ECM_expanding_test_plot(
 res_list
 ECM_eval_plot(data,res_list, target_name = "endettement_menage", use_exp = F)
 
-a+b
-
 ##########################################
 # Plot
 ##########################################
@@ -374,14 +372,30 @@ ECM_prevision( y         = "log_end_snf",
                data      = data, 
                list_data = list_data, window = 2014, use_exp = T, salaire_adj = T, Immo_adj = F)
 
-
 ECM_prevision( y         = "endettement_menage",
-               vars      = c("FBCF", "EURIBOR", "salaires", "chomage"),
-               I1_vars   = c("lag1_log_end_snf", "FBCF"),
+                    vars      = c("Taux_immo", "salaires", "taux_epargne" ),
+                    I1_vars   = c("lag1_endettement_menage", "PIB","lag1_Taux_immo","EURIBOR"),
+                    I0_vars   = c(),
+                    test_size = 2,
+                    data      = data, 
+                    list_data = list_data, window = 2014, use_exp = F, salaire_adj = T, Immo_adj = F)
+
+a <- ECM_prevision( y         = "endettement_menage",
+               vars      = c("Taux_immo", "salaires", "taux_epargne" ),
+               I1_vars   = c("lag1_endettement_menage", "PIB","lag1_Taux_immo","EURIBOR"),
                I0_vars   = c(),
                test_size = 2,
                data      = data, 
                list_data = list_data, window = 2014, use_exp = F, salaire_adj = T, Immo_adj = F)
+df <- a$forecast
+
+plot(data$t, data$Taux_immo, type = "l", col = "gray30", lwd = 2,
+     main = "Taux Immo", xlab = "t", ylab = "Taux_Immo",
+     xlim = range(c(data$t, df$t)),
+     ylim = range(c(data$Taux_immo, df$Taux_immo), na.rm = TRUE))
+
+
+  lines(df$t, df$Taux_immo, col = cols[i], lwd = 1, lty = 2)
 
 
 
