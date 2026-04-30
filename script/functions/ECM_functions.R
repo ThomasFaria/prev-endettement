@@ -1239,7 +1239,7 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
   data_fc <- as.data.frame(data_fc)
   data_fc <- data_fc[data_fc$t > TIME_val, ] 
   data_orig_t <- data_orig
-  m_spread = mean(data_orig_t$Taux_immo - data_orig_t$Taux_long)
+  m_spread = mean(na.omit(data_orig_t$Taux_immo - data_orig_t$Taux_long))
   data_fc$Taux_immo <- data_fc$Taux_long + m_spread
   
   if (salaire_adj == TRUE) {
