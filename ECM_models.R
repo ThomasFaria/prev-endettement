@@ -12,7 +12,6 @@ source("script/get_data_ECM.R")
 data <- read.csv("cache/data_insee_bdf.csv", stringsAsFactors = FALSE)
 data$t <- data$year + data$quarter/4
 
-# 1. Identifier les indices des 3 dernières lignes
 n <- nrow(data)
 last_3_indices <- (n-2):n
 last_val <- tail(na.omit(data$EURIBOR[1:(n-3)]), 1)
