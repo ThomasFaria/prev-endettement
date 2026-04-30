@@ -12,6 +12,11 @@ source("script/get_data_ECM.R")
 data <- read.csv("cache/data_insee_bdf.csv", stringsAsFactors = FALSE)
 data$t <- data$year + data$quarter/4
 
+# 1. Identifier les indices des 3 dernières lignes
+n <- nrow(data)
+last_3_indices <- (n-2):n
+last_val <- tail(na.omit(data$EURIBOR[1:(n-3)]), 1)
+data$EURIBOR[last_3_indices][is.na(data$EURIBOR[last_3_indices])] <- last_val
 
 sheets <- excel_sheets("data/Data_forecasting.xlsx")
 
@@ -387,7 +392,11 @@ a <- ECM_prevision( y         = "endettement_menage",
                test_size = 2,
                data      = data, 
                list_data = list_data, window = 2014, use_exp = F, salaire_adj = T, Immo_adj = F)
+
 df <- a$forecast
+
+class(data$Taux_immo)
+class(df$Taux_immo)
 
 plot(data$t, data$Taux_immo, type = "l", col = "gray30", lwd = 2,
      main = "Taux Immo", xlab = "t", ylab = "Taux_Immo",
@@ -395,9 +404,50 @@ plot(data$t, data$Taux_immo, type = "l", col = "gray30", lwd = 2,
      ylim = range(c(data$Taux_immo, df$Taux_immo), na.rm = TRUE))
 
 
-  lines(df$t, df$Taux_immo, col = cols[i], lwd = 1, lty = 2)
+lines(df$t, df$Taux_immo, col = "blue", lwd = 1, lty = 2)
+
+plot(data$t, data$Taux_long, type = "l", col = "gray30", lwd = 2,
+     main = "Taux_long", xlab = "t", ylab = "Taux_long",
+     xlim = range(c(data$t, df$t)),
+     ylim = range(c(data$Taux_long, df$Taux_long), na.rm = TRUE))
 
 
+lines(df$t, df$Taux_long, col = "blue", lwd = 1, lty = 2)
+
+plot(data$t, data$chomage, type = "l", col = "gray30", lwd = 2,
+     main = "chomage", xlab = "t", ylab = "chomage",
+     xlim = range(c(data$t, df$t)),
+     ylim = range(c(data$chomage, df$chomage), na.rm = TRUE))
+
+
+lines(df$t, df$chomage, col = "blue", lwd = 1, lty = 2)
+
+plot(data$t, data$FBCF, type = "l", col = "gray30", lwd = 2,
+     main = "FBCF", xlab = "t", ylab = "FBCF",
+     xlim = range(c(data$t, df$t)),
+     ylim = range(c(data$FBCF, df$FBCF), na.rm = TRUE))
+
+
+lines(df$t, df$FBCF, col = "blue", lwd = 1, lty = 2)
+
+
+plot(data$t, data$EURIBOR, type = "l", col = "gray30", lwd = 2,
+     main = "EURIBOR", xlab = "t", ylab = "EURIBOR",
+     xlim = range(c(data$t, df$t)),
+     ylim = range(c(data$EURIBOR, df$EURIBOR), na.rm = TRUE))
+
+
+lines(df$t, df$EURIBOR, col = "blue", lwd = 1, lty = 2)
+
+plot(data$t, data$salaires, type = "l", col = "gray30", lwd = 2,
+     main = "salaire", xlab = "t", ylab = "salaire",
+     xlim = range(c(data$t, df$t)),
+     ylim = range(c(data$salaires, df$salaires), na.rm = TRUE))
+
+
+lines(df$t, df$salaire, col = "blue", lwd = 1, lty = 2)
+
+df$Taux_long
 
 #####################################
 # Descriptive prevision 
