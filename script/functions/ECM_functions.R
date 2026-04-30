@@ -1435,6 +1435,5 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
     scale_x_continuous(limits = c(window, NA)) +
     theme(legend.position = "bottom")
   
-  return(p)
-  return(data_fc) 
+ return(list(plot = p, forecast = data_fc))
 }
