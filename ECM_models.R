@@ -230,6 +230,12 @@ legend("bottomleft",
 
 #########################
 
+a <- lm(data_f$Taux_immo ~ data_f$Taux_long)
+summary(a)
+
+b <- lm(data_f$Taux_immo ~ data_f$EURIBOR)
+summary(b)
+
 plot(data_f$time, data_f$spreads, 
      type = "l", 
      col = "steelblue",
@@ -446,7 +452,6 @@ plot(data$t, data$salaires, type = "l", col = "gray30", lwd = 2,
 
 lines(df$t, df$salaire, col = "blue", lwd = 1, lty = 2)
 
-df$Taux_long
 
 #####################################
 # Descriptive prevision 
