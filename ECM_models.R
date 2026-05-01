@@ -160,6 +160,7 @@ ECM_plot(y = "log_end_snf", vars = c("FBCF", "EURIBOR", "salaires", "chomage"),
 
 
 data$spreads = data$Taux_immo - data$Taux_long
+data$spreads2 = data$Taux_immo - data$EURIBOR
 data$time <- as.Date(data$time)
 
 data_f <- data[data$time >= as.Date("2006-01-01"), ]
@@ -241,6 +242,17 @@ plot(data_f$time, data_f$spreads,
      col = "steelblue",
      lwd = 2,
      main = "Spread : Taux immobilier - Taux long terme",
+     xlab = "Date",
+     ylab = "Spread (en points)")
+
+grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
+abline(h = 0, col = "red", lty = 2, lwd = 1.5)
+
+plot(data_f$time, data_f$spreads2, 
+     type = "l", 
+     col = "steelblue",
+     lwd = 2,
+     main = "Spread : Taux immobilier - EURIBOR",
      xlab = "Date",
      ylab = "Spread (en points)")
 
