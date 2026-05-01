@@ -574,6 +574,7 @@ ECM_expanding_test_plot <- function(y,
                                     step = 1,
                                     salaire_adj = T,
                                     Immo_adj = T,
+                                    EURIB_immo = F,
                                     data) {
   res_list <- list()
   ct_vars <- I1_vars
@@ -717,8 +718,17 @@ ECM_expanding_test_plot <- function(y,
     data_fc <- as.data.frame(data_fc)
     data_fc <- data_fc[data_fc$t > end_train, ] 
     data_orig_t <- data_2[data_2$t <= end_train, ] 
-    m_spread = mean(data_orig_t$Taux_immo - data_orig_t$Taux_long)
-    data_fc$Taux_immo <- data_fc$Taux_long + m_spread
+    
+    #m_spread <- last_train$Taux_long - last_train$Taux_immo
+    #data_fc$Taux_immo <- data_fc$Taux_long - m_spread
+    
+    last_3y <- tail(na.omit(data_orig_t$Taux_immo - data_orig_t$Taux_long), 8)
+     m_spread <- mean(last_3y)
+    #m_spread = mean(data_orig_t$Taux_immo - data_orig_t$Taux_long)
+    
+     data_fc$Taux_immo <- data_fc$Taux_long + m_spread
+    
+    
     
     if (salaire_adj == TRUE) {
       salaires3 <- na.omit(data_orig_t$salaires3)
@@ -747,6 +757,11 @@ ECM_expanding_test_plot <- function(y,
       data_fc$salaires <- sal_forecast_only
     }
     
+    if (EURIB_immo == TRUE) {
+      data_fc$Taux_immo <- NA
+      m_spread = mean(data_orig_t$Taux_immo - data_orig_t$EURIBOR)
+      data_fc$Taux_immo <- data_fc$EURIBOR + m_spread
+    }
     
     if (Immo_adj == TRUE) {
       
@@ -1153,7 +1168,7 @@ last_train
 
 View(data)
 
-ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NULL, test_size, data, list_data, window, use_exp = TRUE, salaire_adj = T, Immo_adj = F) {
+ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NULL, test_size, data, list_data, window, use_exp = TRUE, salaire_adj = T, Immo_adj = F, EURIB_immo = T) {
   
   # --- Préparation initiale ---
   ct_vars <- I1_vars 
@@ -1272,6 +1287,13 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
     sal_forecast_only <- sal_final[(n_hist):length(sal_final)]
     
     data_fc$salaires <- sal_forecast_only
+  }
+  
+  
+  if (EURIB_immo == TRUE) {
+    data_fc$Taux_immo <- NA
+    m_spread = mean(na.omit(data_orig_t$Taux_immo - data_orig_t$EURIBOR))
+    data_fc$Taux_immo <- data_fc$EURIBOR + m_spread
   }
   
   
