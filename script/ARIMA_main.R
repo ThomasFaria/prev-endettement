@@ -209,15 +209,15 @@ latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 ############# GRAPH DIFFERENTE PREDICTION #############
 
 
-b <- arima_expanding_test_plot(data, var_name = "endettement_snf", country = "France",
-                   train_size = 62, test_size = 8, step = 4,
+arima_expanding_test_plot(data, var_name = "endettement_snf", country = "France",
+                   train_size = 66, test_size = 8, step = 4,
                    p = 1, d = 1, q = 1,
                    covid = T,
                    covid_start = 84,
                    covid_end   = 92)
 
 arima_expanding_test_plot(data, var_name = "endettement_menage", country = "France",
-                          train_size = 62, test_size = 8, step = 4,
+                          train_size = 66, test_size = 8, step = 4,
                           p = 1, d = 1, q = 0,
                           covid = T,
                           covid_start = 84,

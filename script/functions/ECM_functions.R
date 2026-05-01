@@ -759,8 +759,14 @@ ECM_expanding_test_plot <- function(y,
     
     if (EURIB_immo == TRUE) {
       data_fc$Taux_immo <- NA
-      m_spread = mean(data_orig_t$Taux_immo - data_orig_t$EURIBOR)
+     # m_spread = mean(data_orig_t$Taux_immo - data_orig_t$EURIBOR)
+      last_3y <- tail(na.omit(data_orig_t$Taux_immo - data_orig_t$Taux_long), 8)
+      m_spread <- mean(last_3y)
+      
       data_fc$Taux_immo <- data_fc$EURIBOR + m_spread
+      
+      #m_spread <- last_train$Taux_long - last_train$Taux_immo
+      #data_fc$Taux_immo <- data_fc$Taux_long - m_spread
     }
     
     if (Immo_adj == TRUE) {
