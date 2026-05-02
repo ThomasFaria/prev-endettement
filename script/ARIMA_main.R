@@ -20,6 +20,8 @@ data <- read.csv("cache/data_webstat.csv", stringsAsFactors = FALSE)
 data <- data[, c("Pays","time","endettement_menage", "endettement_snf","endettement_agent_nonfinancie_privee")]
 data$time <- as.Date(data$time)
 
+data$covid <- ifelse(data$time >= as.Date("2020-01-01") & 
+                       data$time <= as.Date("2021-12-31"), 1, 0)
 
 data <- subset(data, Pays == "France")
 
@@ -48,7 +50,7 @@ plot_acf_pacf(country = "France", data, var_name = "endettement_menage_diff",nom
 # AIC et BIC  #
 ###############
 
-summary_table <- test_arima_models_aic_bic(data = data , country = "France", var_name = "endettement_snf_diff", p_max = 3, d = 1, q_max = 3, xreg = NULL)
+summary_table <- test_arima_models_aic_bic(data = data , country = "France", var_name = "endettement_menage_diff", p_max = 3, d = 1, q_max = 3, xreg = NULL)
 summary_table
 
 latex_code <- print(xtable(summary_table), include.rownames = FALSE)
@@ -63,13 +65,13 @@ latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 res_no_covid <- rolling_arima_errors(data,
                      p_max = 3,
                      q_max = 3,
-                     var_name = "endettement_snf",
+                     var_name = "endettement_menage",
                      d = 1,
                      country = "France",
-                     train_size = 64, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 pour directement comparer aux modèles ECM 
+                     train_size = 60, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 (64) pour directement comparer aux modèles ECM 
                      test_size = 12,
-                     step = 2,
-                     covid_windows = c("window_2019","window_2020","window_2021"),
+                     step = 4,
+                     covid_windows = c("window_2020","window_2021","window_2021"),
                      covid = FALSE,
                      covid_start = NULL,
                      covid_end = NULL)
@@ -84,7 +86,7 @@ latex_code <- print(xtable(res_no_covid$summary_table), include.rownames = FALSE
 res_arimax <- test_arima_models_aic_bic_covid(
   data = data, 
   country = "France", 
-  var_name = "endettement_menage"
+  var_name = "endettement_snf"
 )
 
 print(res_arimax)
@@ -105,9 +107,9 @@ res_covid <- rolling_arima_errors(data,
                      var_name = "endettement_menage",
                      d = 1,
                      country = "France",
-                     train_size = 64, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 pour directement comparer aux modèles ECM 
+                     train_size = 59, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 (64) pour directement comparer aux modèles ECM 
                      test_size = 8,
-                     step = 2,
+                     step = 4,
                      covid_windows = c("window_2020", "window_2021", "window_2019"),
                      covid = TRUE,
                      covid_start = 80,
@@ -121,7 +123,7 @@ summary_covid <- res_covid$summary_table
 errors_covid_filled <- errors_covid 
 merrors_covid_filled <- merrors_covid
 
-
+errors_covid
 ########### COMPARAISON AVEC/SANS COVID###########
 
 comparison_table <- compare_arima_errors(
@@ -198,6 +200,7 @@ for (i in seq_along(model_names)) {
 summary_table <- summary_table[order(summary_table$mean_RMSPE), ]
 summary_table # On récupère ici performance modèle ARIMA
 
+
 latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 
 
@@ -210,20 +213,19 @@ latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 
 
 arima_expanding_test_plot(data, var_name = "endettement_snf", country = "France",
-                   train_size = 66, test_size = 8, step = 4,
+                   train_size = 59, test_size = 8, step = 4,
                    p = 1, d = 1, q = 1,
                    covid = T,
                    covid_start = 84,
                    covid_end   = 92)
 
 arima_expanding_test_plot(data, var_name = "endettement_menage", country = "France",
-                          train_size = 66, test_size = 8, step = 4,
-                          p = 1, d = 1, q = 0,
+                          train_size = 59, test_size = 8, step = 4,
+                          p = 2, d = 1, q = 1,
                           covid = T,
                           covid_start = 84,
                           covid_end   = 92)
 
-a+b
 data$covid <- ifelse(data$time >= as.Date("2019-01-01") & data$time <= as.Date("2021-12-31"), 1, 0)
 
 # Ajustement du modèle ARIMAX avec la variable Covid
@@ -234,6 +236,9 @@ fit <- Arima(
   method = "ML"
 )
 
+names(coef(fit))
+summary(fit)
+coef(fit)["data$covid"]
 res = residuals(fit)
 
 fit$coef
