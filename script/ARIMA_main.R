@@ -20,9 +20,6 @@ data <- read.csv("cache/data_webstat.csv", stringsAsFactors = FALSE)
 data <- data[, c("Pays","time","endettement_menage", "endettement_snf","endettement_agent_nonfinancie_privee")]
 data$time <- as.Date(data$time)
 
-data$covid <- ifelse(data$time >= as.Date("2020-01-01") & 
-                       data$time <= as.Date("2021-12-31"), 1, 0)
-
 data <- subset(data, Pays == "France")
 
 ######################
@@ -65,11 +62,11 @@ latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 res_no_covid <- rolling_arima_errors(data,
                      p_max = 3,
                      q_max = 3,
-                     var_name = "endettement_menage",
+                     var_name = "endettement_snf",
                      d = 1,
                      country = "France",
-                     train_size = 60, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 (64) pour directement comparer aux modèles ECM 
-                     test_size = 12,
+                     train_size = 59, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 (64 - 60ménage/59snf pour 2014) pour directement comparer aux modèles ECM 
+                     test_size = 8,
                      step = 4,
                      covid_windows = c("window_2020","window_2021","window_2021"),
                      covid = FALSE,
@@ -78,7 +75,6 @@ res_no_covid <- rolling_arima_errors(data,
 
 print(res_no_covid)
 # ON Récupère ici le résultat de la Random Walk ARIMA(0,1,0) pas de dummy covid pour RW
-
 
 latex_code <- print(xtable(res_no_covid$summary_table), include.rownames = FALSE)
 
@@ -97,6 +93,9 @@ errors_no_covid  <- res_no_covid$errors
 merrors_no_covid  <- res_no_covid$merrors
 summary_no_covid <- res_no_covid$summary_table
 
+errors_no_covid
+merrors_no_covid 
+
 ############# SNF AVEC COVID ##################################################################
 # On test le ARIMA avec covid (test uniquement post covid !!! RMSPE pas directement comparable)
 ###############################################################################################
@@ -104,7 +103,7 @@ summary_no_covid <- res_no_covid$summary_table
 res_covid <- rolling_arima_errors(data,
                      p_max = 3,
                      q_max = 3,
-                     var_name = "endettement_menage",
+                     var_name = "endettement_snf",
                      d = 1,
                      country = "France",
                      train_size = 59, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 (64) pour directement comparer aux modèles ECM 
@@ -124,6 +123,7 @@ errors_covid_filled <- errors_covid
 merrors_covid_filled <- merrors_covid
 
 errors_covid
+merrors_covid_filled
 ########### COMPARAISON AVEC/SANS COVID###########
 
 comparison_table <- compare_arima_errors(
@@ -167,8 +167,7 @@ for (col in colnames(merrors_covid)) {
 print(errors_covid_filled)
 print(merrors_covid_filled)
 
-errors_covid_filled <- errors_covid_filled %>% select(-window_2017)
-errors_covid_filled
+errors_covid_filled 
 
 latex_code <- print(xtable(errors_covid_filled), include.rownames = T)
 
@@ -220,13 +219,14 @@ arima_expanding_test_plot(data, var_name = "endettement_snf", country = "France"
                    covid_end   = 92)
 
 arima_expanding_test_plot(data, var_name = "endettement_menage", country = "France",
-                          train_size = 59, test_size = 8, step = 4,
-                          p = 2, d = 1, q = 1,
+                          train_size = 60, test_size = 8, step = 4,
+                          p = 1, d = 1, q = 0,
                           covid = T,
                           covid_start = 84,
                           covid_end   = 92)
 
-data$covid <- ifelse(data$time >= as.Date("2019-01-01") & data$time <= as.Date("2021-12-31"), 1, 0)
+data$covid <- ifelse(data$time >= as.Date("2020-01-01") & data$time <= as.Date("2021-12-31"), 1, 0)
+
 
 # Ajustement du modèle ARIMAX avec la variable Covid
 fit <- Arima(
@@ -240,6 +240,8 @@ names(coef(fit))
 summary(fit)
 coef(fit)["data$covid"]
 res = residuals(fit)
+
+View(data)
 
 fit$coef
 

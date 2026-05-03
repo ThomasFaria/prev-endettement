@@ -1,8 +1,6 @@
 source("ECM_models.R")
-library(tsDyn)
-library(urca)
-library(vars)
-library(dplyr)
+
+
 
 colnames(data)
 # Variables 
@@ -15,18 +13,17 @@ vars_menage <- c(
 # SNF
 vars_snf <- c(
   "endettement_snf",
-  "inflation",
-  "taux_credit_entreprise",
-  "gdp",
-  "credit_snf",
-  "fbcf"
+  "FBCF",
+  "salaires",
+  "EURIBOR",
+  "chomage"
 )
 
 # CHOIX DU SYSTEME (MENAGES OU SNF)
 
 # choisir ici : soit on travaille pour les ménages soit SNF (2 modèles séparés)
 vars_vecm <- vars_menage
-# vars_vecm <- vars_snf   # <- décommenter pour SNF
+#vars_vecm <- vars_snf   # <- décommenter pour SNF
 
 
 # clean data
@@ -53,7 +50,7 @@ lag_select <- VARselect(
 
 print(lag_select$selection)
 
-lag_opt <- lag_select$selection["AIC(n)"]
+lag_opt <- 4
 
 
 # JOHANSEN COINTEGRATION TEST

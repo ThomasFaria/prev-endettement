@@ -6,7 +6,6 @@ source("script/functions/descriptives_functions.R")
 source("script/functions/ARIMA_functions.R")
 source("script/ARIMA_main.R")
 source("script/functions/ECM_functions.R")
-source("script/collect_data_webstat&descriptive.R")
 source("script/get_data_ECM.R")
 
 data <- read.csv("cache/data_insee_bdf.csv", stringsAsFactors = FALSE)
@@ -63,28 +62,6 @@ print(I1_vars_snf)
 ############################
 
 
-ECMEXP <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ), I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo"), I0_vars = c("octroi_credit"), data)
-summary(ECMEXP$long_term)
-reg <- ECMEXP$long_term
-adf.test(reg$residuals)
-
-summary(ECMEXP$ECM)
-reg <- ECMEXP$ECM
-print(I1_vars_menage)
-adf.test(reg$residuals)
-lmtest::bgtest(reg, 4)
-lmtest::bptest(reg)
-AIC(reg)
-BIC(reg)
-cor(model.matrix(reg)[, -1])
-
-ECM_plot(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ),
-         I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo"),
-         I0_vars = c("octroi_credit"), data, plot_LT = T)
-
-
-#######################
-
 ECMEXP <- ECM_compute(y = "endettement_menage", vars = c("Taux_immo", "salaires", "taux_epargne" ), I1_vars = c("lag1_endettement_menage", "PIB", "lag1_Taux_immo","EURIBOR"), I0_vars = c(), data)
 summary(ECMEXP$long_term)
 reg <- ECMEXP$long_term
@@ -115,6 +92,8 @@ ECMEXP <- ECM_compute(y = "endettement_snf", vars = c("FBCF", "EURIBOR", "salair
 summary(ECMEXP$long_term)
 reg <- ECMEXP$long_term
 adf.test(reg$residuals)
+
+
 summary(ECMEXP$ECM)
 reg <- ECMEXP$ECM
 
@@ -372,7 +351,7 @@ res_list <- ECM_expanding_test_plot(
   I0_vars   = c(),
   test_size = 2,
   start     = 2015,
-  step      = 0.5,
+  step      = 1,
   salaire_adj = T,
   Immo_adj = F,
   EURIB_immo = F,
@@ -433,6 +412,7 @@ b <- ECM_prevision( y         = "endettement_menage",
 
 b$plot
 df <- b$forecast
+df
 
 plot(data$t, data$Taux_immo, type = "l", col = "gray30", lwd = 2,
      main = "Taux Immo", xlab = "t", ylab = "Taux_Immo",
