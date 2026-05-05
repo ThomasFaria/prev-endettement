@@ -191,12 +191,12 @@ for (i in seq_along(model_names)) {
   
   # Colonnes dont le nom contient une année covid
   hc_cols <- !grepl(paste(covid_years, collapse = "|"), colnames(merrors_covid_filled))
-  rmspe_hc <- as.numeric(merrors_covid_filled[model, hc_cols])
+  rmse_hc <- as.numeric(errors_covid_filled[model, hc_cols])
   
   summary_table$mean_RMSE[i]     <- mean(rmse_vals,  na.rm = TRUE)
   summary_table$var_RMSE[i]      <- var(rmse_vals,   na.rm = TRUE)
   summary_table$mean_RMSPE[i]    <- mean(rmspe_vals, na.rm = TRUE)
-  summary_table$mean_RMSPE_HC[i] <- mean(rmspe_hc,  na.rm = TRUE)
+  summary_table$mean_RMSE_HC[i] <- mean(rmse_hc,  na.rm = TRUE)
 }
 
 
@@ -220,14 +220,14 @@ latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 
 
 arima_expanding_test_plot(data, var_name = "endettement_snf", country = "France",
-                   train_size = 59, test_size = 8, step = 4,
+                   train_size = 65, test_size = 8, step = 2,
                    p = 1, d = 1, q = 1,
-                   covid = T,
+                   covid = F,
                    covid_start = 84,
                    covid_end   = 92)
 
 arima_expanding_test_plot(data, var_name = "endettement_menage", country = "France",
-                          train_size = 60, test_size = 8, step = 4,
+                          train_size = 65, test_size = 8, step = 2,
                           p = 1, d = 1, q = 0,
                           covid = T,
                           covid_start = 84,

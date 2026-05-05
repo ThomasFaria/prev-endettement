@@ -1069,7 +1069,7 @@ arima_expanding_test_plot <- function(data,
       mean  = mean_pred,
       lower = lower_pred,
       upper = upper_pred,
-      window = paste0("Train jusqu'à ", format(time_vals[end_train], "%Y"))
+      window = paste0("Train jusqu'à ", format(time_vals[end_train], "%Y-M%m"))  
     )
   }
   
