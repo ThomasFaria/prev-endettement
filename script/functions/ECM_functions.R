@@ -1092,6 +1092,7 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
   all_preds <- data.frame()
   errors_rmse <- c()
   errors_rmspe <- c()
+  errors_rmse_hc <- c()
   
   # 2. Boucle sur les fenêtres de prévision
   for (n in names(res_list)) {
@@ -1130,9 +1131,18 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
       e <- real_vals - pred_vals
       errors_rmse  <- c(errors_rmse, sqrt(mean(e^2)))
       errors_rmspe <- c(errors_rmspe, sqrt(mean((e/real_vals)^2)) * 100)
+      
+      fc_years <- data$year[data$t %in% df_fc$t]
+      hc_mask  <- !fc_years %in% c(2019, 2020, 2021)
+      
+      if(any(hc_mask)) {
+        e_hc <- (real_vals - pred_vals)[hc_mask]
+        errors_rmse_hc <- c(errors_rmse_hc, sqrt(mean(e_hc^2)))
+      } else {
+        errors_rmse_hc <- c(errors_rmse_hc, NA)
     }
   }
-  
+}   
   # --- 3. Graphique ggplot ---
   p <- ggplot() +
     # Données historiques
@@ -1157,8 +1167,9 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
     coord_cartesian(ylim = c(30, 90)) +
     labs(
       title = paste("Backtesting ECM :", target_name, if(use_exp) "(Niveau)" else "(Log)"),
-      subtitle = paste0("RMSE moyen : ", round(mean(errors_rmse), 4), 
-                        " | RMSPE moyen : ", round(mean(errors_rmspe), 2), "%"),
+      subtitle = paste0("RMSE moyen : ", round(mean(errors_rmse), 4),
+                        " | RMSPE moyen : ", round(mean(errors_rmspe), 2), "%",
+                        " | RMSE HC : ", round(mean(errors_rmse_hc, na.rm = TRUE), 4)),
       x = "Date", 
       y = if(use_exp) paste("exp(", target_name, ")") else target_name
     ) +
@@ -1168,11 +1179,6 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
   return(p)
 }
 
-last_idx   <- nrow(data)
-last_train <- data[last_idx, ]
-last_train
-
-View(data)
 
 ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NULL, test_size, data, list_data, window, use_exp = TRUE, salaire_adj = T, Immo_adj = F, EURIB_immo = T) {
   
