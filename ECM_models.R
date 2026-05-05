@@ -328,8 +328,6 @@ autoplot(preds) +
   theme_minimal()
 
 
-
-
 #########################################
 # TEST PREV SNF - pas ajustement salaires
 #########################################
