@@ -62,12 +62,12 @@ latex_code <- print(xtable(summary_table), include.rownames = FALSE)
 res_no_covid <- rolling_arima_errors(data,
                      p_max = 3,
                      q_max = 3,
-                     var_name = "endettement_snf",
+                     var_name = "endettement_menage",
                      d = 1,
                      country = "France",
-                     train_size = 59, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 (64 - 60ménage/59snf pour 2014) pour directement comparer aux modèles ECM 
+                     train_size = 65, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 (65 pour Q2 2015 - 60ménage/59snf pour 2014) pour directement comparer aux modèles ECM 
                      test_size = 8,
-                     step = 4,
+                     step = 2,
                      covid_windows = c("window_2020","window_2021","window_2021"),
                      covid = FALSE,
                      covid_start = NULL,
@@ -96,6 +96,7 @@ summary_no_covid <- res_no_covid$summary_table
 errors_no_covid
 merrors_no_covid 
 
+
 ############# SNF AVEC COVID ##################################################################
 # On test le ARIMA avec covid (test uniquement post covid !!! RMSPE pas directement comparable)
 ###############################################################################################
@@ -103,12 +104,11 @@ merrors_no_covid
 res_covid <- rolling_arima_errors(data,
                      p_max = 3,
                      q_max = 3,
-                     var_name = "endettement_snf",
+                     var_name = "endettement_menage",
                      d = 1,
                      country = "France",
-                     train_size = 59, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 (64) pour directement comparer aux modèles ECM 
-                     test_size = 8,
-                     step = 4,
+                     train_size = 65, # la borne de départ détermine la qualité du modèle elle est ici fixé a 2015 (65 pour Q2 2015 - 60ménage/59snf pour 2014) pour directement comparer aux modèles ECM 
+                     step = 2,
                      covid_windows = c("window_2020", "window_2021", "window_2019"),
                      covid = TRUE,
                      covid_start = 80,
@@ -134,7 +134,7 @@ comparison_table <- compare_arima_errors(
 print(comparison_table)
 
 comparison_table2 <-  comparison_table %>% 
-  select(RMSE_mean,RMSE_covid_mean)
+  dplyr::select(RMSE_mean,RMSE_covid_mean)
 
 latex_code <- print(xtable(comparison_table2), include.rownames = T)
 
@@ -143,6 +143,7 @@ latex_code <- print(xtable(comparison_table2), include.rownames = T)
 ################################################################################################
 # On recalcul le RMSPE Moyen avec RMSPE classique pre covid et avec dummy covid pour post covid
 ###############################################################################################
+
 
 for (col in colnames(errors_covid)) {
   if (col %in% colnames(errors_no_covid)) {
@@ -176,20 +177,27 @@ summary_table <- data.frame(
   Model = model_names,
   mean_RMSE = NA,
   var_RMSE = NA,
-  mean_RMSPE = NA
+  mean_RMSPE = NA,
+  mean_RMSPE_HC = NA
 )
 
-# Boucle sur chaque modèle
+
+covid_years <- c("2019", "2020", "2021")
+
 for (i in seq_along(model_names)) {
   model <- model_names[i]
-  rmse_vals <- as.numeric(errors_covid_filled[model, ])
+  rmse_vals  <- as.numeric(errors_covid_filled[model, ])
   rmspe_vals <- as.numeric(merrors_covid_filled[model, ])
   
-  summary_table$mean_RMSE[i] <- mean(rmse_vals, na.rm = TRUE)
-  summary_table$var_RMSE[i]  <- var(rmse_vals, na.rm = TRUE)
-  summary_table$mean_RMSPE[i] <- mean(rmspe_vals, na.rm = TRUE)
+  # Colonnes dont le nom contient une année covid
+  hc_cols <- !grepl(paste(covid_years, collapse = "|"), colnames(merrors_covid_filled))
+  rmspe_hc <- as.numeric(merrors_covid_filled[model, hc_cols])
+  
+  summary_table$mean_RMSE[i]     <- mean(rmse_vals,  na.rm = TRUE)
+  summary_table$var_RMSE[i]      <- var(rmse_vals,   na.rm = TRUE)
+  summary_table$mean_RMSPE[i]    <- mean(rmspe_vals, na.rm = TRUE)
+  summary_table$mean_RMSPE_HC[i] <- mean(rmspe_hc,  na.rm = TRUE)
 }
-
 
 
 #####################
