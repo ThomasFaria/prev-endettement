@@ -104,6 +104,8 @@ AIC(reg)
 BIC(reg)
 cor(model.matrix(reg)[, -1])
 
+check_residuals_2(reg$residuals, lags = 20)
+
 ECM_plot(y = "endettement_snf", vars = c("FBCF", "EURIBOR", "salaires", "chomage"),
          I1_vars = c("lag1_endettement_snf", "FBCF", "defaillances"),
          I0_vars = c(), data, plot_LT = T)
@@ -130,6 +132,8 @@ lmtest::coeftest(reg, vcov = sandwich::vcovHAC(reg))
 ECM_plot(y = "log_end_snf", vars = c("FBCF", "EURIBOR", "salaires", "chomage"),
          I1_vars = c("lag1_log_end_snf", "FBCF", "defaillances"),
          I0_vars = c(), data, plot_LT = T)
+
+
 
 
 
@@ -216,27 +220,32 @@ summary(a)
 b <- lm(data_f$Taux_immo ~ data_f$EURIBOR)
 summary(b)
 
-plot(data_f$time, data_f$spreads, 
-     type = "l", 
-     col = "steelblue",
-     lwd = 2,
-     main = "Spread : Taux immobilier - Taux long terme",
-     xlab = "Date",
-     ylab = "Spread (en points)")
-
-grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
-abline(h = 0, col = "red", lty = 2, lwd = 1.5)
+data_f$spread3 <- stats::filter(data_f$spreads2, rep(1/8, 8), sides = 1)
 
 plot(data_f$time, data_f$spreads2, 
      type = "l", 
      col = "steelblue",
      lwd = 2,
-     main = "Spread : Taux immobilier - EURIBOR",
+     main = "Spread : Taux immobilier - Taux de référence",
      xlab = "Date",
      ylab = "Spread (en points)")
 
+lines(data_f$time, data_f$spreads, 
+      col = "lightblue", 
+      lwd = 2)
+
+lines(data_f$time, data_f$spread3, 
+      col = "lightgreen", 
+      lwd = 2)
+
 grid(nx = NULL, ny = NULL, col = "gray90", lty = "dotted")
 abline(h = 0, col = "red", lty = 2, lwd = 1.5)
+
+legend("topright",
+       legend = c("Euribor", "OAT","MA(8) EURIBOR"),
+       col = c("steelblue", "lightblue", "lightgreen"),
+       lwd = 2,
+       bty = "n")
 
 adf.test(na.omit(data_f$spreads))
 kpss.test(na.omit(data_f$spreads))
