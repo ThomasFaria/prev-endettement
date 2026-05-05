@@ -155,7 +155,7 @@ test_arima_models_aic_bic_covid <- function(data, country, var_name = "var", xre
   return(results)
 }
 
-
+str(data$time)
 rolling_arima_errors <- function(
     data,
     var_name = "values_snf",
@@ -163,9 +163,9 @@ rolling_arima_errors <- function(
     q_max = 3,
     d = 1,
     train_size = 60,
-    test_size = 12,
+    test_size = 8,
     country = "France",
-    step = 4,
+    step = 2,
     covid = FALSE,
     covid_start = NULL,
     covid_end = NULL,
@@ -202,7 +202,7 @@ rolling_arima_errors <- function(
     train <- Z[start_train:(start_train + train_size - 1)]
     test  <- Z[(start_train + train_size):(start_train + train_size + test_size - 1)]
     
-    win_name <- paste0("window_", format(data$time[start_train + train_size + test_size - 1], "%Y"))
+    win_name <- paste0("W_", format(data$time[start_train + train_size + test_size - 1], "%Y_M%m"))
     errors[[win_name]]  <- NA
     merrors[[win_name]] <- NA
     
