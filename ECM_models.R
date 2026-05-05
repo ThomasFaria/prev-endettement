@@ -341,7 +341,7 @@ res_list <- ECM_expanding_test_plot(
   I0_vars   = c(),
   test_size = 2,
   start     = 2015,
-  step      = 1,
+  step      = 0.5,
   salaire_adj = T,
   Immo_adj = F,
   EURIB_immo = F,

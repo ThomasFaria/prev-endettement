@@ -1127,22 +1127,20 @@ ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp =
     real_vals <- y_real[data$t %in% df_fc$t]
     pred_vals <- y_fc[df_fc$t %in% data$t]
     
+    window_year <- floor(as.numeric(n))  # année de début de la fenêtre
+    
     if(length(real_vals) > 0) {
       e <- real_vals - pred_vals
       errors_rmse  <- c(errors_rmse, sqrt(mean(e^2)))
       errors_rmspe <- c(errors_rmspe, sqrt(mean((e/real_vals)^2)) * 100)
       
-      fc_years <- data$year[data$t %in% df_fc$t]
-      hc_mask  <- !fc_years %in% c(2019, 2020, 2021)
-      
-      if(any(hc_mask)) {
-        e_hc <- (real_vals - pred_vals)[hc_mask]
-        errors_rmse_hc <- c(errors_rmse_hc, sqrt(mean(e_hc^2)))
+      if(!window_year %in% c(2019, 2020, 2021)) {
+        errors_rmse_hc <- c(errors_rmse_hc, sqrt(mean(e^2)))
       } else {
         errors_rmse_hc <- c(errors_rmse_hc, NA)
+      }
     }
   }
-}   
   # --- 3. Graphique ggplot ---
   p <- ggplot() +
     # Données historiques
