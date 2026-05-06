@@ -1498,7 +1498,8 @@ RUN_prevision <- function(y = c("SNF", "MENAGE"),
                           data, 
                           test_size = 8, 
                           Immo = c("EURIBOR", "OAT")) {
-  
+
+
 if (y == "SNF") {
   
 ECM <- ECM_prevision( y         = "log_end_snf",
@@ -1571,14 +1572,14 @@ y_historique <- data$endettement_snf
     y_ecm <- df$prévisions
   }
 }
+
+  data$time <- as.Date(data$time)
   
   df_hist <- data.frame(
     time = data$time,
     value = y_historique
   )
   
-
-  data$time <- as.Date(data$time)
   
   last_time <- tail(data$time, 1)
   
@@ -1647,6 +1648,23 @@ y_historique <- data$endettement_snf
       legend.position = "none"
     )
   
+  result <- list(
+    plot = p,
+    
+    arima = data.frame(
+      time = time_forecast,
+      value = y_arima,
+      lower = lower,
+      upper = upper
+    ),
+    
+    ecm = data.frame(
+      time = time_forecast,
+      value = y_ecm
+    )
+  )
+  
+  return(result)
   
 }
 
