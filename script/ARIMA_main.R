@@ -249,7 +249,11 @@ summary(fit)
 coef(fit)["data$covid"]
 res = residuals(fit)
 
-View(data)
+trend <- 1:length(diff(data$endettement_menage))
+bp <- breakpoints(diff(data$endettement_menage) ~ trend)
+summary(bp)
+plot(bp)
+
 
 fit$coef
 
