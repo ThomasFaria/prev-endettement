@@ -1495,18 +1495,19 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
 
 
 RUN_prevision <- function(y = c("SNF", "MENAGE"), 
-                          data, 
-                          test_size = 8, 
+                          df = data, 
+                          window = 2012,
+                          prev_size = 2, 
                           Immo = c("EURIBOR", "OAT")) {
 
 
 if (y == "SNF") {
   
-ECM <- ECM_prevision( y         = "log_end_snf",
+ECM <- ECM_prevision( y    = "log_end_snf",
                  vars      = c("FBCF", "EURIBOR", "salaires", "chomage"),
                  I1_vars   = c("lag1_log_end_snf", "FBCF"),
                  I0_vars   = c(),
-                 test_size = test_size,
+                 test_size = prev_size,
                  data      = data, 
                  list_data = list_data, window = 2014, use_exp = T, salaire_adj = T, Immo_adj = F, EURIB_immo = F)
   
@@ -1519,7 +1520,7 @@ fit <- Arima(
   method = "ML"
 )
 
-fc_arima <- forecast(fit, h = test_size)
+fc_arima <- forecast(fit, h = prev_size*4)
 
 y_arima <- as.numeric(fc_arima$mean)
 
@@ -1537,7 +1538,7 @@ y_historique <- data$endettement_snf
     method = "ML"
   )
   
-  fc_arima <- forecast(fit, h = test_size)
+  fc_arima <- forecast(fit, h = prev_size*4)
   
   y_arima <- as.numeric(fc_arima$mean)
   lower <- as.numeric(fc_arima$lower)
@@ -1551,12 +1552,12 @@ y_historique <- data$endettement_snf
                    vars      = c("Taux_immo", "salaires", "taux_epargne" ),
                    I1_vars   = c("lag1_endettement_menage", "PIB","lag1_Taux_immo","EURIBOR"),
                    I0_vars   = c(),
-                   test_size = test_size,
-                   data      = data, 
+                   test_size = prev_size,
+                   data      = df, 
                    list_data = list_data, window = 2014, use_exp = F, salaire_adj = T, Immo_adj = F, EURIB_immo = T)
    
    df <- ECM$forecast
-   y_ecm <- df$prévisions
+   y_ecm <- df$endettement_menage
     
   }else{
     
@@ -1564,29 +1565,26 @@ y_historique <- data$endettement_snf
                           vars      = c("Taux_immo", "salaires", "taux_epargne" ),
                           I1_vars   = c("lag1_endettement_menage", "PIB","lag1_Taux_immo","EURIBOR"),
                           I0_vars   = c(),
-                          test_size = test_size,
+                          test_size = prev_size,
                           data      = data, 
-                          list_data = list_data, window = 2014, use_exp = F, salaire_adj = T, Immo_adj = F, EURIB_immo = T)
+                          list_data = list_data, window = 2014, use_exp = F, salaire_adj = T, Immo_adj = F, EURIB_immo = F)
     
     df <- ECM$forecast
-    y_ecm <- df$prévisions
+    y_ecm <- df$endettement_menage
   }
 }
-
-  data$time <- as.Date(data$time)
-  
+    
   df_hist <- data.frame(
     time = data$time,
     value = y_historique
   )
-  
   
   last_time <- tail(data$time, 1)
   
   time_forecast <- seq(
     from = last_time,
     by = "3 months",
-    length.out = test_size + 1
+    length.out = prev_size * 4 + 1
   )[-1]
   
   
@@ -1601,52 +1599,58 @@ y_historique <- data$endettement_snf
     time = time_forecast,
     value = y_ecm
   )
-
   
+  df_arima$time <- as.Date(df_arima$time)
+  df_ecm$time   <- as.Date(df_ecm$time)
+
+  year_val <- as.character(window[1]) 
+  
+  date_start <- as.Date(paste0(window, "-01-01"))
+  date_bascule <- max(df_hist$time)
+  date_fin <- max(df_arima$time)
+  
+  # --- GRAPHIQUE ---
   p <- ggplot() +
+    # Zone bleue de prévision
+    annotate("rect", 
+             xmin = date_bascule, xintercept = date_fin, # xmin/xmax acceptent les Dates
+             xmax = date_fin,
+             ymin = -Inf, ymax = Inf, fill = "#E6F2FF", alpha = 0.5) +
     
     # Historique
-    geom_line(data = df_hist, 
-              aes(x = time, y = value), 
-              color = "black", size = 1) +
+    geom_line(data = df_hist, aes(x = time, y = value), color = "black", size = 1) +
     
-    # ARIMA
-    geom_line(data = df_arima, 
-              aes(x = time, y = value), 
-              color = "#2C7FB8", size = 1) +
+    # ARIMA (Intervalle + Ligne)
+    geom_ribbon(data = df_arima, aes(x = time, ymin = lower, ymax = upper), 
+                fill = "violet", alpha = 0.2) +
+    geom_line(data = df_arima, aes(x = time, y = value, color = "ARIMA"), size = 1) +
     
-    geom_ribbon(data = df_arima, 
-                aes(x = time, ymin = lower, ymax = upper), 
-                fill = "#2C7FB8", alpha = 0.2) +
+    # ECM (Ligne)
+    geom_line(data = df_ecm, aes(x = time, y = value, color = "ECM"), size = 1) +
     
-    # ECM
-    geom_line(data = df_ecm, 
-              aes(x = time, y = value), 
-              color = "#D95F0E", size = 1) +
+    # Séparation rouge (on utilise as.numeric pour être 100% sûr)
+    geom_vline(xintercept = as.numeric(date_bascule), 
+               linetype = "dashed", color = "red", size = 0.8) +
     
-    # séparation historique / prévision
-    geom_vline(xintercept = max(df_hist$time), 
-               linetype = "dashed", color = "grey40") +
+    # LE ZOOM : scale_x_date est plus robuste que xlim()
+    scale_x_date(limits = c(date_start, date_fin), expand = c(0,0)) +
     
-    # labels propres
+    # Couleurs de la légende
+    scale_color_manual(name = "Modèles", 
+                       values = c("ARIMA" = "#2C7FB8", "ECM" = "#D95F0E")) +
+    
     labs(
-      title = paste("Prévisions à 2 ans –", y),
+      title = paste("Prévisions à", prev_size ,"ans –", y),
       subtitle = "Comparaison ARIMA et ECM",
-      x = NULL,
-      y = "Endettement",
-      caption = "Zone bleue : intervalle de confiance ARIMA (95%)"
+      x = NULL, y = "Endettement",
+      caption = "Zone Violette : IC ARIMA (95%) | Fond Bleu : Zone de prévision"
     ) +
-    
-    # thème propre
-    theme_minimal(base_size = 12) +
-    
+    theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14),
-      plot.subtitle = element_text(size = 11),
-      axis.text = element_text(color = "black"),
-      panel.grid.minor = element_blank(),
-      legend.position = "none"
+      legend.position = "bottom",
+      panel.grid.minor = element_blank()
     )
+  
   
   result <- list(
     plot = p,
@@ -1668,3 +1672,10 @@ y_historique <- data$endettement_snf
   
 }
 
+RUN_prevision(y =  "MENAGE", 
+              df = data, 
+              prev_size = 2,
+              window = 2012,
+              Immo =  "OAT")
+
+str(data$time)
