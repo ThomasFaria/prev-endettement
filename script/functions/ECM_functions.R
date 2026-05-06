@@ -1080,7 +1080,6 @@ ECM_plot <- function(y = "endettement_menage", vars, I1_vars = NULL, I0_vars = N
 }
 
 
-
 ECM_eval_plot <- function(data, res_list, target_name = "log_end_snf", use_exp = TRUE) {
   
   # 1. Préparation du réel (appliqué conditionnellement)
@@ -1488,3 +1487,166 @@ ECM_prevision <- function(y = "log_end_snf", vars, I1_vars = NULL, I0_vars = NUL
   
  return(list(plot = p, forecast = data_fc))
 }
+
+
+
+
+
+
+
+RUN_prevision <- function(y = c("SNF", "MENAGE"), 
+                          data, 
+                          test_size = 8, 
+                          Immo = c("EURIBOR", "OAT")) {
+  
+if (y == "SNF") {
+  
+ECM <- ECM_prevision( y         = "log_end_snf",
+                 vars      = c("FBCF", "EURIBOR", "salaires", "chomage"),
+                 I1_vars   = c("lag1_log_end_snf", "FBCF"),
+                 I0_vars   = c(),
+                 test_size = test_size,
+                 data      = data, 
+                 list_data = list_data, window = 2014, use_exp = T, salaire_adj = T, Immo_adj = F, EURIB_immo = F)
+  
+df <- ECM$forecast
+y_ecm <- df$prévisions
+
+fit <- Arima(
+  data$endettement_snf,
+  order = c(1,1,1),
+  method = "ML"
+)
+
+fc_arima <- forecast(fit, h = test_size)
+
+y_arima <- as.numeric(fc_arima$mean)
+
+lower <- as.numeric(fc_arima$lower)
+upper <- as.numeric(fc_arima$upper)
+
+y_historique <- data$endettement_snf
+
+}else{
+  
+  fit <- Arima(
+    data$endettement_menage,
+    order = c(1,1,0),
+    xreg = data$covid,
+    method = "ML"
+  )
+  
+  fc_arima <- forecast(fit, h = test_size)
+  
+  y_arima <- as.numeric(fc_arima$mean)
+  lower <- as.numeric(fc_arima$lower)
+  upper <- as.numeric(fc_arima$upper)
+  
+  y_historique <- data$endettement_menage
+  
+  if(Immo == "EURIBOR"){
+    
+   ECM <- ECM_prevision( y         = "endettement_menage",
+                   vars      = c("Taux_immo", "salaires", "taux_epargne" ),
+                   I1_vars   = c("lag1_endettement_menage", "PIB","lag1_Taux_immo","EURIBOR"),
+                   I0_vars   = c(),
+                   test_size = test_size,
+                   data      = data, 
+                   list_data = list_data, window = 2014, use_exp = F, salaire_adj = T, Immo_adj = F, EURIB_immo = T)
+   
+   df <- ECM$forecast
+   y_ecm <- df$prévisions
+    
+  }else{
+    
+    ECM <- ECM_prevision( y         = "endettement_menage",
+                          vars      = c("Taux_immo", "salaires", "taux_epargne" ),
+                          I1_vars   = c("lag1_endettement_menage", "PIB","lag1_Taux_immo","EURIBOR"),
+                          I0_vars   = c(),
+                          test_size = test_size,
+                          data      = data, 
+                          list_data = list_data, window = 2014, use_exp = F, salaire_adj = T, Immo_adj = F, EURIB_immo = T)
+    
+    df <- ECM$forecast
+    y_ecm <- df$prévisions
+  }
+}
+  
+  df_hist <- data.frame(
+    time = data$time,
+    value = y_historique
+  )
+  
+
+  data$time <- as.Date(data$time)
+  
+  last_time <- tail(data$time, 1)
+  
+  time_forecast <- seq(
+    from = last_time,
+    by = "3 months",
+    length.out = test_size + 1
+  )[-1]
+  
+  
+  df_arima <- data.frame(
+    time = time_forecast,
+    value = y_arima,
+    lower = lower,
+    upper = upper
+  )
+  
+  df_ecm <- data.frame(
+    time = time_forecast,
+    value = y_ecm
+  )
+
+  
+  p <- ggplot() +
+    
+    # Historique
+    geom_line(data = df_hist, 
+              aes(x = time, y = value), 
+              color = "black", size = 1) +
+    
+    # ARIMA
+    geom_line(data = df_arima, 
+              aes(x = time, y = value), 
+              color = "#2C7FB8", size = 1) +
+    
+    geom_ribbon(data = df_arima, 
+                aes(x = time, ymin = lower, ymax = upper), 
+                fill = "#2C7FB8", alpha = 0.2) +
+    
+    # ECM
+    geom_line(data = df_ecm, 
+              aes(x = time, y = value), 
+              color = "#D95F0E", size = 1) +
+    
+    # séparation historique / prévision
+    geom_vline(xintercept = max(df_hist$time), 
+               linetype = "dashed", color = "grey40") +
+    
+    # labels propres
+    labs(
+      title = paste("Prévisions à 2 ans –", y),
+      subtitle = "Comparaison ARIMA et ECM",
+      x = NULL,
+      y = "Endettement",
+      caption = "Zone bleue : intervalle de confiance ARIMA (95%)"
+    ) +
+    
+    # thème propre
+    theme_minimal(base_size = 12) +
+    
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      plot.subtitle = element_text(size = 11),
+      axis.text = element_text(color = "black"),
+      panel.grid.minor = element_blank(),
+      legend.position = "none"
+    )
+  
+  
+}
+
