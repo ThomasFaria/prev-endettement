@@ -1579,13 +1579,10 @@ y_historique <- data$endettement_snf
     value = y_historique
   )
   
-  last_time <- tail(data$time, 1)
-  
-  time_forecast <- seq(
-    from = last_time,
-    by = "3 months",
-    length.out = prev_size * 4 + 1
-  )[-1]
+
+  last_qtr <- zoo::as.yearqtr(tail(data$time, 1))
+  time_forecast_qtr <- last_qtr + seq(1/4, prev_size, by = 1/4)
+  time_forecast <- as.Date(time_forecast_qtr)
   
   
   df_arima <- data.frame(
@@ -1606,6 +1603,7 @@ y_historique <- data$endettement_snf
   year_val <- as.character(window[1]) 
   
   date_start <- as.Date(paste0(window, "-01-01"))
+  df_hist <- df_hist[df_hist$time >= date_start, ]
   date_bascule <- max(df_hist$time)
   date_fin <- max(df_arima$time)
   
@@ -1642,7 +1640,7 @@ y_historique <- data$endettement_snf
     labs(
       title = paste("Prévisions à", prev_size ,"ans –", y),
       subtitle = "Comparaison ARIMA et ECM",
-      x = NULL, y = "Endettement",
+      x = NULL, y = "Ratio -- Endettement / PIB",
       caption = "Zone Violette : IC ARIMA (95%) | Fond Bleu : Zone de prévision"
     ) +
     theme_minimal() +
@@ -1672,10 +1670,4 @@ y_historique <- data$endettement_snf
   
 }
 
-RUN_prevision(y =  "MENAGE", 
-              df = data, 
-              prev_size = 2,
-              window = 2012,
-              Immo =  "OAT")
 
-str(data$time)

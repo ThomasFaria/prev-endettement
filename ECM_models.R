@@ -70,6 +70,9 @@ adf.test(reg$residuals)
 summary(ECMEXP$ECM)
 reg <- ECMEXP$ECM
 
+check_residuals_2(reg$residuals, lags = 20)
+
+
 adf.test(reg$residuals)
 lmtest::bgtest(reg, 4)
 lmtest::bptest(reg)
@@ -358,7 +361,7 @@ res_list <- ECM_expanding_test_plot(
   I0_vars   = c(),
   test_size = 2,
   start     = 2015,
-  step      = 1,
+  step      = 0.5,
   salaire_adj = T,
   Immo_adj = F,
   EURIB_immo = F,
@@ -393,13 +396,17 @@ ECM_eval_plot(data,res_list, target_name = "endettement_menage", use_exp = F)
 
 
 
-ECM_prevision( y         = "log_end_snf",
+b <- ECM_prevision( y         = "log_end_snf",
                vars      = c("FBCF", "EURIBOR", "salaires", "chomage"),
                I1_vars   = c("lag1_log_end_snf", "FBCF"),
                I0_vars   = c(),
                test_size = 2,
                data      = data, 
                list_data = list_data, window = 2014, use_exp = T, salaire_adj = T, Immo_adj = F, EURIB_immo = F)
+df <- b$forecast
+df
+
+
 
 ECM_prevision( y         = "endettement_menage",
                     vars      = c("Taux_immo", "salaires", "taux_epargne" ),
@@ -449,6 +456,8 @@ a <- ECM_prevision( y         = "endettement_menage",
                list_data = list_data, window = 2014, use_exp = F, salaire_adj = T, Immo_adj = F, EURIB_immo = F)
 
 df <- a$forecast
+
+colnames(df)
 
 ########################
 
@@ -501,6 +510,14 @@ plot(data$t, data$salaires, type = "l", col = "gray30", lwd = 2,
 
 lines(df$t, df$salaire, col = "blue", lwd = 1, lty = 2)
 
+
+plot(data$t, data$taux_epargne, type = "l", col = "gray30", lwd = 2,
+     main = "Taux Immo", xlab = "t", ylab = "taux_epargne",
+     xlim = range(c(data$t, df$t)),
+     ylim = range(c(data$taux_epargne, df$taux_epargne), na.rm = TRUE))
+
+
+lines(df$t, df$taux_epargne, col = "blue", lwd = 1, lty = 2)
 
 #####################################
 # Descriptive prevision 
@@ -667,5 +684,23 @@ for (n in names(res_list)) {
 }
 
 par(mfrow = c(1, 1))
+
+##################################
+#Final
+##################################
+
+
+
+RUN_prevision(y =  "MENAGE", 
+              df = data, 
+              prev_size = 2,
+              window = 2012,
+              Immo =  "OAT")
+
+
+model <- lm(Taux_long ~ Taux_immo, data = data)
+
+chow_test <- sctest(model, type = "Chow", point = 102)
+print(chow_test)
 
 
