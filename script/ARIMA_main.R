@@ -249,14 +249,6 @@ summary(fit)
 coef(fit)["data$covid"]
 res = residuals(fit)
 
-trend <- 1:length(diff(data$endettement_menage))
-bp <- breakpoints(diff(data$endettement_menage) ~ trend)
-summary(bp)
-plot(bp)
-
-
-fit$coef
-
 check_residuals_2(res, lags = 20)
 
 ############# PREDICTION #############
