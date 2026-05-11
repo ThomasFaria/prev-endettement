@@ -155,7 +155,6 @@ test_arima_models_aic_bic_covid <- function(data, country, var_name = "var", xre
   return(results)
 }
 
-str(data$time)
 rolling_arima_errors <- function(
     data,
     var_name = "values_snf",
