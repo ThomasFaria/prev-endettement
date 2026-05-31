@@ -1,5 +1,7 @@
 source("script/ECM_models.R")
 
+
+
 colnames(data)
 # Variables 
 
